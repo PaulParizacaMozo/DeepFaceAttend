@@ -1,4 +1,4 @@
-# DeepFaceAttend: Sistema de Control de Asistencia Basado en Aprendizaje Profundo
+# DeepFaceAttend: Sistema de Control de Asistencia Basado en Reconocimiento Facial
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
