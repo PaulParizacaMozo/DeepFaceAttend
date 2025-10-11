@@ -7,6 +7,14 @@
 
 Este repositorio contiene la investigación y el desarrollo del proyecto **DeepFaceAttend**, un sistema de control de asistencia basado en reconocimiento facial. El proyecto se encuentra **actualmente en desarrollo** y tiene como objetivo proponer una solución automatizada y precisa para la gestión de asistencia en entornos educativos, utilizando técnicas de aprendizaje profundo.
 
+## Autores
+
+Este proyecto es el resultado de una investigación en la Universidad Nacional de San Agustín.
+
+- **Sergio Mogollon**
+- **Paul Parizaca**
+- **Braulio Maldonado**
+
 ---
 
 ## Tabla de Contenidos
@@ -75,17 +83,22 @@ Esta es la etapa final donde se actualizan los registros.
 
 ## Herramientas y Tecnologías
 
-- **Lenguaje Base**: Python 3.11
+- **Lenguaje Base**: Python 3.11>
 - **Framework de Deep Learning**: PyTorch
 - **Visión por Computadora**: OpenCV
 - **Modelo de Detección Facial**: RetinaFace
 - **Modelo de Extracción de Embeddings**: ArcFace (con backbone iResNet50)
 - **Base de Datos**: Archivos CSV (para embeddings) y SQLite (para registros de asistencia).
 
-## Autores
+### Fase 5: Interfaz de Usuario
+Se ha desarrollado una interfaz web utilizando React para facilitar la interacción con el sistema. La interfaz permite a los administradores gestionar estudiantes, ver registros de asistencia y monitorear el estado del sistema en tiempo real.
 
-Este proyecto es el resultado de una investigación en la Universidad Nacional de San Agustín.
+#### ***Diseño Móvil***
 
-- **Sergio Mogollon**
-- **Paul Parizaca**
-- **Braulio Maldonado**
+![Login](img/mobile_login.png) ![Dashboard](img/mobile_dashboard.png) ![Attendance](img/mobile_attendance.png)
+
+#### ***Diseño Escritorio***
+
+![Login](img/desktop_login.png) 
+![Dashboard](img/desktop_dashboard.png) 
+![Attendance](img/desktop_attendance.png)

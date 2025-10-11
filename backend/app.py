@@ -2,8 +2,11 @@ from flask import Flask, request, jsonify
 from flask_marshmallow import Marshmallow
 from models import db, Student
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+# configure cors for all origins:
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuracion de SQLite
 base_dir = os.path.abspath(os.path.dirname(__file__))

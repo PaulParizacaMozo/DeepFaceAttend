@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #66181b;
+    --gray-custom: #9b9b9e;
+    --font-sans: "Google Sans", sans-serif;
+}
+
+/* 3. Estilos base adicionales (opcional) */
+body {
+  background-color: #f0f4f9;
+  font-family: var(--font-sans); /* Usa la fuente definida en tu tema */
+}
