@@ -62,6 +62,8 @@ def register_commands(app):
         from app.models.enrollment import Enrollment
         from app.models.attendance import Attendance
         from datetime import time, date, datetime
+        from app.services.student_service import process_local_images
+        import os
 
         # Limpiar tablas existentes en el orden correcto para evitar errores de FK
         db.session.query(Attendance).delete()
@@ -71,15 +73,53 @@ def register_commands(app):
         db.session.query(Student).delete()
         db.session.commit()
         print("Existing data cleared.")
+        
+        project_root = os.path.dirname(os.path.abspath(app.root_path))
+        dataset_base_path = os.path.join(project_root, '../datasets/epcc_photos')
+        students_data = [
+            {
+                'cui': '20210001', 'first_name': 'Luciana Julissa', 'last_name': 'Huaman Coaquira',
+                'image_folder': os.path.join(dataset_base_path, 'luciana_pics')
+            },
+            {
+                'cui': '20210002', 'first_name': 'Nelzon Jorge', 'last_name': 'Apaza Apaza',
+                'image_folder': os.path.join(dataset_base_path, 'nelzon_pics')
+            },
+            {
+                'cui': '20210003', 'first_name': 'Kevin Joaquin', 'last_name': 'Chambi Tapia',
+                'image_folder': os.path.join(dataset_base_path, 'kevin_pics')
+            },
+            {
+                'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla',
+                'image_folder': os.path.join(dataset_base_path, 'braulio_pics')
+            }
+        ]
+        students_to_add = []
 
         try:
             # 1. Crear Estudiantes
-            students_to_add = [
-                Student(cui='20210001', first_name='Luciana Julissa', last_name='Huaman Coaquira', filepath_embeddings='embeddings/20210001.npy'),
-                Student(cui='20210002', first_name='Nelzon Jorge', last_name='Apaza Apaza', filepath_embeddings='embeddings/20210002.npy'),
-                Student(cui='20210003', first_name='Kevin Joaquin', last_name='Chambi Tapia', filepath_embeddings='embeddings/20210003.npy'),
-                Student(cui='20210004', first_name='Braulio Nayap', last_name='Maldonado Casilla', filepath_embeddings='embeddings/20210004.npy')
-            ]
+            for s_data in students_data:
+                cui = s_data['cui']
+                image_folder = s_data['image_folder']
+                if not os.path.isdir(image_folder):
+                    print(f"Warning: Image folder not found at '{image_folder}' for {cui}. Skipping.")
+                    continue
+                image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder)]
+                filepath = process_local_images(image_paths, cui)
+                if filepath:
+                    students_to_add.append(
+                        Student(
+                            cui=cui, 
+                            first_name=s_data['first_name'], 
+                            last_name=s_data['last_name'], 
+                            filepath_embeddings=filepath
+                        )
+                    )
+                    print(f"Successfully processed images for {cui}.")
+                else:
+                    print(f"Failed to process images for {cui}.")
+            if not students_to_add:
+                raise Exception("No students could be created from the provided images.")
             db.session.add_all(students_to_add)
             db.session.commit()
             print(f"{len(students_to_add)} students created.")

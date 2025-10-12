@@ -12,22 +12,33 @@ curl -X GET "http://localhost:5000/students/" | jq
 
 echo -e "\n--- POST /students/ ---"
 # Crea un nuevo estudiante
-curl -X POST "http://localhost:5000/students/" \
--H "Content-Type: application/json" \
--d '{
-    "cui": "20259999",
-    "first_name": "Juan",
-    "last_name": "Perez",
-    "filepath_embeddings": "embeddings/20259999.npy"
-}' | jq
+curl -X POST http://localhost:5000/students/ \
+-F "cui=20250001" \
+-F "first_name=Shinji" \
+-F "last_name=Ikari" \
+-F "images=@../datasets/epcc_photos/braulio_pics/braulio_front.png" \
+-F "images=@../datasets/epcc_photos/braulio_pics/braulio_right.png"
+
+# curl -X POST "http://localhost:5000/students/" \
+# -H "Content-Type: application/json" \
+# -d '{
+#     "cui": "20259999",
+#     "first_name": "Juan",
+#     "last_name": "Perez",
+#     "filepath_embeddings": "embeddings/20259999.npy"
+# }' | jq
 
 echo -e "\n--- PUT /students/{student_id} ---"
 # Actualiza un estudiante existente (reemplaza {student_id} con un ID real)
-curl -X PUT "http://localhost:5000/students/ca9379b9-ea84-4bd5-8c51-ed8b80c3be5c" \
--H "Content-Type: application/json" \
--d '{
-    "filepath_embeddings": "embeddings/20259999.npy"
-}' | jq
+curl -X PUT http://localhost:5000/students/8fb5852c-14bc-4510-adfd-e3982dd33a24 \
+-F "last_name=Ikari-Katsuragi" \
+-F "images=@../datasets/epcc_photos/braulio_pics/braulio_left.png" 
+
+# curl -X PUT "http://localhost:5000/students/ca9379b9-ea84-4bd5-8c51-ed8b80c3be5c" \
+# -H "Content-Type: application/json" \
+# -d '{
+#     "filepath_embeddings": "embeddings/20259999.npy"
+# }' | jq
 
 echo -e "\n\n=================================================="
 echo "Probando Endpoints de Cursos"

@@ -1,12 +1,14 @@
 # config.py
+import os
 
-# --- Rutas y Nombres de Archivos ---
-DB_PATH = 'database.sqlite'
-CSV_OUTPUT_DIR = 'embeddings_csvs'
+# --- Path Configuration  ---
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(os.path.dirname(PROJECT_ROOT), 'backend', 'database.db')
+CSV_OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'embeddings_csvs')
 
-# --- Parámetros del Modelo y Reconocimiento ---
-SIMILARITY_THRESHOLD = 0.39  # Umbral para considerar una coincidencia (0.0 a 1.0)
-DETECTION_THRESHOLD = 0.8    # Umbral mínimo para detectar un rostro (0.0 a 1.0)
+# --- Model and Recognition Parameters (No changes needed here) ---
+SIMILARITY_THRESHOLD = 0.39
+DETECTION_THRESHOLD = 0.7
 
-# --- Configuración de Red ---
+# --- Network Configuration (No changes needed here) ---
 SERVICE_URL = 'http://localhost:4000/process_frame'
