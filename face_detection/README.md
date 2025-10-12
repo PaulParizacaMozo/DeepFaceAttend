@@ -1,13 +1,14 @@
 # **Backend de Registro y Reconocimiento Facial**
 
-Este proyecto implementa un servicio backend en Flask diseñado para procesar fotogramas de video en tiempo real. El sistema detecta rostros, extrae sus características (embeddings) y los guarda en una base de datos para su posterior reconocimiento en un sistema de control de asistencia.
+Este proyecto implementa un servicio backend en Flask diseñado para procesar fotogramas de video en tiempo real. El sistema detecta rostros, extrae sus características (embeddings) y los guarda en una base de datos para su posterior reconocimiento.
 
 ## **Características**
 
-- **Detección de Rostros**: Utiliza el modelo `insightface` para una detección precisa.
-- **Extracción de Embeddings**: Genera un vector de 512 dimensiones para cada rostro detectado.
-- **Base de Datos Persistente**: Guarda las imágenes de los rostros y sus embeddings en una carpeta y un archivo CSV, respectivamente.
-- **Arquitectura Cliente-Servidor**: El backend (`app.py`) procesa los datos enviados por un cliente (`client.py`) que controla la cámara.
+- **API de Registro**: Un endpoint para registrar nuevas personas enviando su nombre y un conjunto de imágenes.
+- **API de Reconocimiento**: Un endpoint que recibe un fotograma y devuelve la identidad de las personas reconocidas.
+- **Detección Precisa**: Utiliza el robusto modelo `insightface` para la detección y análisis facial.
+- **Base de Datos Persistente**: Utiliza SQLite para gestionar los perfiles de las personas y archivos CSV para almacenar los embeddings.
+- **Arquitectura Modular**: El código está organizado en módulos para facilitar su mantenimiento y escalabilidad.
 
 ## **Instalación y Configuración del Entorno**
 
@@ -47,31 +48,51 @@ conda install -c conda-forge libstdcxx-ng
 
 ---
 
-## **Cómo Usar el Sistema** ▶️
+## **Cómo Usar el Sistema**
 
-El sistema tiene dos componentes que deben ejecutarse en terminales separadas: el **servidor** y el **cliente**.
+El flujo de trabajo consta de 3 pasos: iniciar el servidor, registrar a las personas y, finalmente, iniciar el cliente de reconocimiento.
 
 ### **Paso 1: Iniciar el Servidor Backend**
 
-El servidor es el cerebro del sistema. Se encarga de recibir las imágenes y procesarlas.
+El servidor es el cerebro del sistema. Debe estar siempre en ejecución para poder registrar y reconocer personas.
 
-- **Para registrar una nueva persona**, asegúrate de modificar la variable `PERSON_NAME` dentro del archivo `app.py`.
 - Abre una terminal, activa el entorno (`conda activate backend_facial`) y ejecuta:
+  ```bash
+  python app.py
+  ```
+
+El servidor se iniciará y esperará conexiones en el puerto 4000. **Deja esta terminal abierta.**
+
+### **Paso 2: Registrar Personas en la Base de Datos**
+
+Antes de que el sistema pueda reconocer a alguien, primero necesita saber cómo es esa persona. Este paso envía un nombre y un conjunto de imágenes al servidor para crear un perfil en la base de datos.
+
+- **Prepara tus imágenes**: Crea una carpeta con varias fotos del rostro de la persona que quieres registrar (ej. `./kevin/`).
+- Abre una **nueva terminal** y usa el siguiente comando `curl` para enviar los datos.
 
 ```bash
-python app.py
+curl -X POST http://localhost:4000/register \
+-F 'name=kevin' \
+-F 'images=@./kevin/kevin_right.png' \
+-F 'images=@./kevin/kevin_left.png' \
+-F 'images=@./kevin/kevin_front.png'
 ```
 
-El servidor se iniciará y esperará conexiones en el puerto 4000.
+**¿Cómo funciona este comando?**
 
-### **Paso 2: Iniciar el Cliente de la Cámara**
+- `curl -X POST ...`: Realiza una petición POST al endpoint `/register` de tu servidor.
+- `-F 'name=kevin'`: Envía un campo de formulario llamado `name` con el valor `kevin`.
+- `-F 'images=@./kevin/...'`: El flag `-F` se usa para adjuntar archivos. La clave debe ser `images` para cada archivo, y el `@` le indica a `curl` que cargue el contenido del archivo especificado en la ruta.
 
-El cliente activa la cámara, captura fotogramas y los envía al servidor para ser procesados.
+Repite este paso para cada persona que desees registrar en el sistema.
 
-- Abre una **segunda terminal**, activa el entorno (`conda activate backend_facial`) y ejecuta:
+### **Paso 3: Iniciar el Reconocimiento en Tiempo Real**
 
-```bash
-python client.py
-```
+Una vez que has registrado al menos una persona, ya puedes iniciar el cliente para que el sistema comience a reconocerla.
 
-Se abrirá una ventana mostrando la imagen de la cámara y el proceso de detección comenzará. ¡Mira la terminal del servidor para ver cómo se guardan los rostros\!
+- Abre una **tercera terminal** (o usa la del paso 2), activa el entorno (`conda activate backend_facial`) y ejecuta:
+  ```bash
+  python client.py
+  ```
+
+Se abrirá una ventana mostrando la imagen de la cámara. Cuando una persona registrada se ponga frente a ella, verás en la terminal del cliente la identidad reconocida.

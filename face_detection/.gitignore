@@ -1,2 +1,5 @@
 detected_faces
 *.csv
+*.png
+*.sqlite
+__pycache__

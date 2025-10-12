@@ -1,35 +1,85 @@
+# app.py
+
 from flask import Flask, request, jsonify
 import cv2
 import numpy as np
-import pandas as pd
-import insightface
-from insightface.app import FaceAnalysis
-import os
-import time
+import config
+import face_analyzer
+import database_manager
 
 app = Flask(__name__)
 
-# --- CONFIGURACIÓN ---
-PERSON_NAME = "shinji" 
-FACES_DIR = 'detected_faces'
-EMBEDDINGS_CSV = 'embeddings.csv'
-os.makedirs(FACES_DIR, exist_ok=True)
+# --- INICIALIZACIÓN (se ejecuta una sola vez al arrancar) ---
+face_analysis_model = face_analyzer.load_model()
+known_face_db = database_manager.load_known_faces_from_db()
 
-# --- CARGA DEL MODELO ---
-print("Cargando modelo de análisis facial...")
-face_analysis_model = FaceAnalysis(allowed_modules=['detection', 'recognition'])
-face_analysis_model.prepare(ctx_id=0, det_size=(640, 640))
-print("Modelo cargado exitosamente.")
+# --- ENDPOINT DE REGISTRO DE NUEVAS PERSONAS ---
+@app.route('/register', methods=['POST'])
+def register_person():
+    """
+    Recibe un nombre y N imágenes, extrae embeddings y los guarda en la DB.
+    """
+    global known_face_db
+    
+    # 1. Validar entradas
+    if 'name' not in request.form:
+        return jsonify({"error": "El campo 'name' es requerido."}), 400
+    person_name = request.form['name']
 
-# --- ENDPOINTS DE LA API ---
+    images = request.files.getlist('images')
+    if not images:
+        return jsonify({"error": "No se proporcionaron imágenes en el campo 'images'."}), 400
+
+    # 2. Procesar cada imagen enviada
+    embeddings_data = []
+    print(f"\nIniciando proceso de registro para: {person_name}")
+    for i, file in enumerate(images):
+        np_img = np.frombuffer(file.read(), np.uint8)
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            print(f"  - Advertencia: No se pudo leer la imagen {i+1}. Saltando.")
+            continue
+
+        faces = face_analysis_model.get(frame)
+        if not faces:
+            print(f"  - Advertencia: No se detectó rostro en la imagen {i+1}. Saltando.")
+            continue
+        
+        best_face = max(faces, key=lambda face: face.det_score)
+        
+        if best_face.det_score < config.DETECTION_THRESHOLD:
+            print(f"  - Advertencia: Rostro en imagen {i+1} con bajo puntaje ({best_face.det_score:.2f}). Saltando.")
+            continue
+        
+        embedding = best_face.embedding
+        embedding_str = ';'.join(map(str, embedding))
+        embeddings_data.append({'image_number': i + 1, 'embedding': embedding_str})
+        print(f"  - Procesada imagen {i+1}/{len(images)} exitosamente.")
+    
+    # 3. Guardar los embeddings si se extrajo al menos uno
+    if not embeddings_data:
+        return jsonify({"error": "No se pudo extraer ningún embedding de alta calidad de las imágenes proporcionadas."}), 400
+
+    database_manager.save_person_embeddings(person_name, embeddings_data)
+    
+    # 4. CRÍTICO: Recargar la base de datos en memoria para que el reconocimiento funcione de inmediato
+    print("\nRegistro exitoso. Recargando la base de datos en memoria...")
+    known_face_db = database_manager.load_known_faces_from_db()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Se registró a '{person_name}' con {len(embeddings_data)} embeddings de alta calidad."
+    }), 201
+
+# --- ENDPOINT DE RECONOCIMIENTO EN TIEMPO REAL ---
 @app.route('/process_frame', methods=['POST'])
 def process_frame():
     if 'image' not in request.files:
         return jsonify({"error": "No se encontró ninguna imagen"}), 400
-    file = request.files['image']
     
-    img_stream = file.read()
-    np_img = np.frombuffer(img_stream, np.uint8)
+    file = request.files['image']
+    np_img = np.frombuffer(file.read(), np.uint8)
     frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
     if frame is None:
@@ -37,62 +87,28 @@ def process_frame():
 
     faces = face_analysis_model.get(frame)
     if not faces:
-        return jsonify({"message": "No se detectaron rostros"}), 200
-    
-    saved_faces_count = 0
-    for i, face in enumerate(faces):
-        detection_score = face.det_score
+        return jsonify({"recognized_faces": [], "message": "No se detectaron rostros"})
 
-        if detection_score < 0.5: # Umbral más estricto para mejor calidad
-            print(f"Rostro {i}: Ignorado por bajo puntaje ({detection_score:.2f}).")
+    recognized_faces_in_frame = []
+    for face in faces:
+        if face.det_score < config.DETECTION_THRESHOLD:
             continue
-        print(f"Rostro {i}: Pasó el umbral de calidad ({detection_score:.2f}).")
 
-        embedding = face.embedding
-        final_crop = face.norm_crop # Intenta obtener el recorte alineado
-
-        # Si 'norm_crop' falla, creamos un recorte manual como respaldo.
-        if final_crop is None:
-            print(f"Rostro {i}: 'norm_crop' falló. Creando recorte manual.")
-            # Obtener las coordenadas del bounding box
-            bbox = face.bbox.astype(int)
-            x1, y1, x2, y2 = bbox
-            
-            y1 = max(0, y1)
-            x1 = max(0, x1)
-            y2 = min(frame.shape[0], y2)
-            x2 = min(frame.shape[1], x2)
-            manual_crop = frame[y1:y2, x1:x2]
-            
-            # Si el recorte manual tiene un tamaño válido, redimensionarlo
-            if manual_crop.size > 0:
-                final_crop = cv2.resize(manual_crop, (112, 112))
-                print(f"Rostro {i}: Recorte manual creado y redimensionado a 112x112.")
-            else:
-                print(f"Rostro {i}: El recorte manual resultó en una imagen vacía. Se omite.")
-                continue # Pasa al siguiente rostro
-
-        if final_crop is not None and final_crop.size > 0:
-            timestamp = int(time.time())
-            
-            image_filename = f"{PERSON_NAME}_{timestamp}_{i}.jpg"
-            image_path = os.path.join(FACES_DIR, image_filename)
-            cv2.imwrite(image_path, final_crop)
-            print(f"Guardado rostro para '{PERSON_NAME}' en: {image_path}")
-            
-            embedding_str = ';'.join(map(str, embedding))
-            new_entry = pd.DataFrame([{'name': PERSON_NAME, 'embedding': embedding_str}])
-
-            if not os.path.exists(EMBEDDINGS_CSV):
-                 new_entry.to_csv(EMBEDDINGS_CSV, mode='w', header=True, index=False)
-            else:
-                new_entry.to_csv(EMBEDDINGS_CSV, mode='a', header=False, index=False)
-            
-            saved_faces_count += 1
-        else:
-            print(f"Rostro {i}: Falló tanto 'norm_crop' como el recorte manual. Se omite.")
-
-    return jsonify({"message": f"{saved_faces_count} de {len(faces)} rostro(s) guardado(s) como '{PERSON_NAME}'"})
+        new_embedding = face.embedding
+        best_match_name = "Desconocido"
+        highest_similarity = config.SIMILARITY_THRESHOLD
+        
+        for name, known_embedding in known_face_db.items():
+            similarity = np.dot(new_embedding, known_embedding) / (np.linalg.norm(new_embedding) * np.linalg.norm(known_embedding))
+            if similarity > highest_similarity:
+                highest_similarity = similarity
+                best_match_name = name
+        
+        recognized_faces_in_frame.append({
+            "identity": best_match_name,
+            "confidence": f"{highest_similarity:.2f}" if best_match_name != "Desconocido" else "N/A"
+        })
+    return jsonify({"recognized_faces": recognized_faces_in_frame})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000)
