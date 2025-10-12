@@ -18,4 +18,17 @@ def get_students():
     all_students = Student.query.all()
     return students_schema.jsonify(all_students), 200
 
-# ... (GET by ID, PUT, DELETE igual que en tu código original)
+@students_bp.route('/<string:student_id>', methods=['PUT'])
+def update_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    data = request.get_json()
+    if 'cui' in data:
+        student.cui = data['cui']
+    if 'first_name' in data:
+        student.first_name = data['first_name']
+    if 'last_name' in data:
+        student.last_name = data['last_name']
+    if 'filepath_embeddings' in data:
+        student.filepath_embeddings = data['filepath_embeddings']
+    db.session.commit()
+    return student_schema.jsonify(student), 200
