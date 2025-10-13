@@ -18,4 +18,7 @@ def get_courses():
     all_courses = Course.query.all()
     return courses_schema.jsonify(all_courses), 200
 
-# ... (Implementa GET by ID, PUT, DELETE para cursos si lo necesitas)
+@courses_bp.route('/<string:course_code>', methods=['GET'])
+def get_course_by_code(course_code):
+    course = Course.query.filter_by(course_code=course_code).first_or_404()
+    return course_schema.jsonify(course)
