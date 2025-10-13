@@ -103,7 +103,7 @@ const Login = () => {
           </form>
         </div>
       </div>
-      
+
       {/* Pie de página con el texto de la UNSA */}
       <footer className="absolute bottom-4 right-6 text-xs text-gray-100/80">
         <p>Plataforma desarrollada para la UNSA</p>
