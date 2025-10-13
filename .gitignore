@@ -1,0 +1,54 @@
+# Dependencias y paquetes
+# -----------------------
+# Ignora los módulos de Node en cualquier subdirectorio (ej: /frontend/node_modules)
+**/node_modules/
+
+# Ignora los entornos virtuales de Python en cualquier subdirectorio (ej: /backend/venv)
+**/venv/
+**/env/
+**/.venv/
+**/.env/
+
+# Archivos de bloqueo de paquetes (si no se desean en el repo)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Archivos generados y caché
+# --------------------------
+# Caché de Python
+**/__pycache__/
+*.py[cod]
+
+# Carpetas de build y distribución de proyectos de JavaScript/TypeScript
+**/dist/
+**/build/
+**/.next/
+**/.nuxt/
+
+# Archivos de logs
+# ----------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bases de datos locales
+# ----------------------
+*.sqlite3
+*.db
+
+# Archivos de configuración local (no subir credenciales al repositorio)
+# --------------------------------------------------------------------
+.env
+local_settings.py
+
+# Archivos de configuración del editor de código
+# ----------------------------------------------
+.vscode/
+.idea/
+
+# Archivos del sistema operativo
+# ------------------------------
+.DS_Store
+Thumbs.db
