@@ -3,6 +3,8 @@
 
 @theme {
     --color-primary: #66181b;
+    --color-primary-dark: #3b0d0f;
+    --color-primary-light: #a1272b;
     --gray-custom: #9b9b9e;
     --font-sans: "Google Sans", sans-serif;
 }
