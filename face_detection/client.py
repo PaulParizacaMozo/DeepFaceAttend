@@ -23,7 +23,7 @@ def send_frame_to_server(frame):
         print(f"Connection error: {e}")
 
 def start_camera_feed():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         print("Error: Could not open camera.")
         return

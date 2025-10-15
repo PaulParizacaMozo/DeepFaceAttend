@@ -38,3 +38,17 @@ def load_known_faces_from_db():
     except Exception as e:
         print(f"Error loading face database: {e}")
         return {}
+    
+def prepare_vectorized_db(known_face_db):
+    """Convierte el diccionario a una matriz NumPy normalizada."""
+    if not known_face_db:
+        return None, None
+
+    labels = list(known_face_db.keys())
+    matrix = np.vstack(list(known_face_db.values())).astype('float32')
+
+    # Normalizar cada embedding (para similitud del coseno)
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    matrix = matrix / norms
+
+    return matrix, labels
