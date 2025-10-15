@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+// src/components/CourseCard.tsx
+
+import { useNavigate } from 'react-router-dom';
 import type { Course } from '../types';
 
 interface CourseCardProps {
@@ -6,15 +8,30 @@ interface CourseCardProps {
 }
 
 const CourseCard = ({ course }: CourseCardProps) => {
+  const navigate = useNavigate();
+
+  const handleViewAttendance = () => {
+    navigate(`/attendance/${course.code}`);
+  };
+
   return (
-    <Link to={`/course/${course.code}`} className="block group">
-      <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-transparent hover:border-primary/50 h-full">
-        <h3 className="text-xl font-medium text-gray-900 group-hover:text-primary transition-colors">
-          {course.title}
-        </h3>
-        <p className="text-gray-custom mt-2">{course.code}</p>
+    <div
+      className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+      onClick={handleViewAttendance}
+    >
+      <div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">{course.title}</h3>
+        <p className="text-sm text-gray-500 font-mono">{course.code}</p>
       </div>
-    </Link>
+      <div className="mt-4">
+        <button
+          className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
+          onClick={(e) => { e.stopPropagation(); handleViewAttendance(); }}
+        >
+          Ver Asistencia
+        </button>
+      </div>
+    </div>
   );
 };
 

@@ -12,22 +12,23 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/course/:courseId" 
+          <Route
+            path="/course/:courseId"
             element={
               <ProtectedRoute>
                 <Attendance />
               </ProtectedRoute>
-            } 
+            }
           />
+          <Route path="/attendance/:courseCode" element={<Attendance />} />
           {/* Redirección por defecto a la página de login si no hay ruta */}
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>

@@ -1,4 +1,18 @@
-// Define la estructura de un estudiante según tu backend
+export interface Schedule {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  location: string;
+}
+
+export interface Course {
+  id: string;
+  title: string; // course_name en el backend
+  code: string;  // course_code en el backend
+  schedules?: Schedule[];
+}
+
 export interface Student {
   id: string;
   cui: string;
@@ -7,8 +21,10 @@ export interface Student {
   filepath_embeddings: string;
 }
 
-// Define la estructura de un curso (para los datos de ejemplo)
-export interface Course {
-    title: string;
-    code: string;
+export interface AttendanceRecord {
+  id: string;
+  student_id: string;
+  course_id: string;
+  attendance_date: string; // Formato 'YYYY-MM-DD'
+  status: 'presente' | 'tarde' | 'ausente';
 }
