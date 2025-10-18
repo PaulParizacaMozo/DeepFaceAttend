@@ -26,12 +26,22 @@ def load_known_faces_from_db():
                 print(f"  - Warning: CSV file not found for {full_name}. Skipping.")
                 continue
             
-            df = pd.read_csv(filepath)
-            embeddings = df['embedding'].apply(lambda x: np.fromstring(x, sep=';')).tolist()
-            
-            if embeddings:
-                average_embedding = np.mean(np.array(embeddings), axis=0)
-                known_face_db[cui] = average_embedding
+            try:
+                df = pd.read_csv(filepath)
+
+                # Se espera solo una fila con un embedding promedio
+                if 'embedding' not in df.columns or df.empty:
+                    print(f"  - Warning: Invalid embedding file for {full_name}.")
+                    continue
+
+                embedding_str = df['embedding'].iloc[0]
+                embedding = np.fromstring(embedding_str, sep=';')
+
+                known_face_db[cui] = embedding
+
+            except Exception as e:
+                print(f"  - Error reading {full_name}'s embedding: {e}")
+                
         print(f"Success: Loaded {len(known_face_db)} known faces into memory.")
         return known_face_db
 

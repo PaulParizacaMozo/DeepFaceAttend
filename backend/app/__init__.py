@@ -63,6 +63,7 @@ def register_commands(app):
         from app.models.attendance import Attendance
         from datetime import time, date, datetime
         from app.services.student_service import process_local_images
+        from app.services.enrollment_service import assign_to_course
         import os
 
         # Limpiar tablas existentes en el orden correcto para evitar errores de FK
@@ -95,33 +96,42 @@ def register_commands(app):
             }
         ]
         students_to_add = []
-
         try:
-            # 1. Crear Estudiantes
+            # 1️. Crear Estudiantes
             for s_data in students_data:
-                cui = s_data['cui']
+                new_student = Student(
+                    cui=s_data['cui'],
+                    first_name=s_data['first_name'],
+                    last_name=s_data['last_name'],
+                    filepath_embeddings=""
+                )
+                db.session.add(new_student)
+                students_to_add.append(new_student)
+            db.session.commit()
+
+            # 2️. Procesar imágenes de cada estudiante ya con su ID en BD
+            for student in students_to_add:
+                s_data = next((d for d in students_data if d['cui'] == student.cui), None)
+                if not s_data:
+                    print(f"No image folder found for {student.cui}")
+                    continue
                 image_folder = s_data['image_folder']
                 if not os.path.isdir(image_folder):
-                    print(f"Warning: Image folder not found at '{image_folder}' for {cui}. Skipping.")
+                    print(f"Folder not found for {student.id}: {image_folder}")
                     continue
-                image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder)]
-                filepath = process_local_images(image_paths, cui)
-                if filepath:
-                    students_to_add.append(
-                        Student(
-                            cui=cui, 
-                            first_name=s_data['first_name'], 
-                            last_name=s_data['last_name'], 
-                            filepath_embeddings=filepath
-                        )
-                    )
-                    print(f"Successfully processed images for {cui}.")
+                image_paths = [
+                    os.path.join(image_folder, f)
+                    for f in os.listdir(image_folder)
+                    if f.lower().endswith(('.jpg', '.jpeg', '.png'))
+                ]
+                if not image_paths:
+                    print(f"No images found in {image_folder} for {student.id}")
+                    continue
+                success = process_local_images(image_paths, student.id)
+                if success:
+                    print(f"Embeddings processed successfully for {student.id}")
                 else:
-                    print(f"Failed to process images for {cui}.")
-            if not students_to_add:
-                raise Exception("No students could be created from the provided images.")
-            db.session.add_all(students_to_add)
-            db.session.commit()
+                    print(f"Failed to process embeddings for {student.id}")
             print(f"{len(students_to_add)} students created.")
 
             # 2. Crear Cursos (guardamos la referencia a Cloud Computing)
@@ -148,11 +158,22 @@ def register_commands(app):
             print(f"{len(schedules_to_add)} schedules for Cloud Computing created.")
 
             # 4. Matricular estudiantes en Cloud Computing
-            enrollments_to_add = [Enrollment(student_id=s.id, course_id=course_cloud.id) for s in students_to_add]
-            db.session.add_all(enrollments_to_add)
-            db.session.commit()
-            print(f"{len(enrollments_to_add)} students enrolled in Cloud Computing.")
-
+            enrollments_to_add = []
+            for s in students_to_add:
+                success = assign_to_course(s.id, course_cloud.id)
+                if success:
+                    enrollment = Enrollment(student_id=s.id, course_id=course_cloud.id)
+                    enrollments_to_add.append(enrollment)
+                    db.session.add(enrollment)
+                    print(f"Embedding for student {s.id} assigned successfully — ready to enroll.")
+                else:
+                    print(f"Skipping enrollment for student {s.id}: embedding assignment failed.")
+            if enrollments_to_add:
+                db.session.commit()
+                print(f"{len(enrollments_to_add)} students enrolled in Cloud Computing (local DB).")
+            else:
+                print("No enrollments were added — all embedding assignments failed.")
+                
             # 5. Registrar Asistencia
             attendance_records = [
                 # 2 de Sep, 2025
