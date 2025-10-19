@@ -4,53 +4,55 @@ import numpy as np
 import pandas as pd
 from .. import config
 
-def load_known_faces_from_db():
+def load_known_faces_from_csv(course_name):
+    """
+    Carga embeddings conocidos desde un CSV específico del curso.
+    El archivo debe estar en config.CSV_OUTPUT_DIR y tener columnas:
+        id, embedding
+    """
     known_face_db = {}
-    
-    if not os.path.exists(config.DB_PATH):
-        print("Warning: Database not found. No faces will be recognized.")
+
+    # Construir ruta completa
+    csv_path = os.path.join(config.CSV_OUTPUT_DIR, f"{course_name}.csv")
+
+    if not os.path.exists(csv_path):
+        print(f"[WARN] CSV file not found: {csv_path}")
         return known_face_db
 
     try:
-        conn = sqlite3.connect(config.DB_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT cui, first_name, last_name, filepath_embeddings FROM students")
-        persons = cursor.fetchall()
-        conn.close()
+        df = pd.read_csv(csv_path)
 
-        for cui, first_name, last_name, filepath in persons:
-            full_name = f"{first_name} {last_name}"
+        # Validar columnas
+        if not {'student_id', 'embedding'}.issubset(df.columns):
+            print(f"[ERROR] CSV {csv_path} must contain 'id' and 'embedding' columns.")
+            return known_face_db
 
-            if not filepath or not os.path.exists(filepath):
-                print(f"  - Warning: CSV file not found for {full_name}. Skipping.")
+        for _, row in df.iterrows():
+            student_id = row['student_id']
+            emb_str = row['embedding']
+
+            if not isinstance(emb_str, str) or not emb_str.strip():
+                print(f"  - Warning: Empty embedding for {student_id}. Skipping.")
                 continue
-            
+
             try:
-                df = pd.read_csv(filepath)
-
-                # Se espera solo una fila con un embedding promedio
-                if 'embedding' not in df.columns or df.empty:
-                    print(f"  - Warning: Invalid embedding file for {full_name}.")
-                    continue
-
-                embedding_str = df['embedding'].iloc[0]
-                embedding = np.fromstring(embedding_str, sep=';')
-
-                known_face_db[cui] = embedding
-
+                embedding = np.fromstring(emb_str, sep=';')
+                known_face_db[student_id] = embedding
             except Exception as e:
-                print(f"  - Error reading {full_name}'s embedding: {e}")
-                
-        print(f"Success: Loaded {len(known_face_db)} known faces into memory.")
+                print(f"  - Error parsing embedding for {student_id}: {e}")
+
+        print(f"[INFO] Loaded {len(known_face_db)} embeddings from {csv_path}")
         return known_face_db
 
     except Exception as e:
-        print(f"Error loading face database: {e}")
+        print(f"[ERROR] Failed to read CSV {csv_path}: {e}")
         return {}
     
 def prepare_vectorized_db(known_face_db):
-    """Convierte el diccionario a una matriz NumPy normalizada."""
+    """
+    Convierte el diccionario de embeddings a una matriz NumPy normalizada
+    y un arreglo de etiquetas.
+    """
     if not known_face_db:
         return None, None
 

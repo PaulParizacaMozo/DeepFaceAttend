@@ -1,6 +1,11 @@
+import cv2
 import numpy as np
 from .. import config
 import time
+import requests
+from collections import defaultdict
+
+CAMERA_CLIENT_URL = "http://localhost:6000/start_capture" 
 
 def find_best_match(new_embedding, known_face_db, threshold):
     best_match_name = "Unknown"
@@ -98,3 +103,20 @@ def recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels):
         })
 
     return recognized_faces
+
+def capture_and_recognize_faces(scheduler_id):
+    print(f"[INFO] Sending remote capture command to camera client for attendance")
+    
+    payload = {
+        "scheduler_id": scheduler_id,
+        "duration": 1,  # minutos
+        "interval": 30  # segundos
+    }
+    try:
+        response = requests.post(CAMERA_CLIENT_URL, json=payload, timeout=10)
+        if response.status_code == 200:
+            print(f"[INFO] Camera client acknowledged start: {response.json()}")
+        else:
+            print(f"[ERROR] Camera client error: {response.status_code} - {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Failed to contact camera client: {e}")
