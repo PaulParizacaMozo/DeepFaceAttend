@@ -60,9 +60,7 @@ const Attendance = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // NOTA: Asumimos que la ruta para obtener un curso por su CÓDIGO es /courses/code/:courseCode
-        // Si no es así, ajusta esta URL.
-        const courseRes = await axios.get(`http://localhost:5000/courses/code/${courseCode}`);
+        const courseRes = await axios.get(`http://localhost:5000/courses/${courseCode}`);
         const courseData = courseRes.data;
         const courseId = courseData.id;
 
