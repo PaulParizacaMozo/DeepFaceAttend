@@ -87,13 +87,13 @@ def register_commands(app):
         dataset_base_path = os.path.join(project_root, '../datasets/epcc_photos')
         
         students_data = [
-            { 'cui': '20210001', 'first_name': 'Luciana Julissa', 'last_name': 'Huaman Coaquira', 'email': 'luciana.h@email.com', 'image_folder': os.path.join(dataset_base_path, 'luciana_pics') },
-            { 'cui': '20210002', 'first_name': 'Nelzon Jorge', 'last_name': 'Apaza Apaza', 'email': 'nelzon.a@email.com', 'image_folder': os.path.join(dataset_base_path, 'nelzon_pics') },
-            { 'cui': '20210003', 'first_name': 'Kevin Joaquin', 'last_name': 'Chambi Tapia', 'email': 'kevin.c@email.com', 'image_folder': os.path.join(dataset_base_path, 'kevin_pics') },
-            { 'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla', 'email': 'braulio.m@email.com', 'image_folder': os.path.join(dataset_base_path, 'braulio_pics') }
+            { 'cui': '20210001', 'first_name': 'Luciana Julissa', 'last_name': 'Huaman Coaquira', 'email': 'lhuaman@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'luciana_pics') },
+            { 'cui': '20210002', 'first_name': 'Nelzon Jorge', 'last_name': 'Apaza Apaza', 'email': 'napaza@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'nelzon_pics') },
+            { 'cui': '20210003', 'first_name': 'Kevin Joaquin', 'last_name': 'Chambi Tapia', 'email': 'kchambi@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'kevin_pics') },
+            { 'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla', 'email': 'bmaldonado@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'braulio_pics') }
         ]
         
-        students_created = []
+        students_to_add = []
         try:
             # 1. Crear Usuarios y Perfiles (Estudiantes y Profesores)
             print("Creating users and profiles...")
@@ -105,21 +105,20 @@ def register_commands(app):
                 new_student = Student(cui=s_data['cui'], first_name=s_data['first_name'], last_name=s_data['last_name'], user=user_student)
                 db.session.add(user_student)
                 db.session.add(new_student)
-                students_created.append(new_student)
+                students_to_add.append(new_student)
             
             # Crear Profesor Alvaro Mamani con su cuenta de Usuario
-            user_teacher = User(email='alvaro.m@email.com', role=UserRole.TEACHER)
-            user_teacher.set_password('profesor123')
-            teacher_alvaro = Teacher(first_name='Alvaro', last_name='Mamani', user=user_teacher)
+            user_teacher = User(email='amamani@unsa.edu.pe', role=UserRole.TEACHER)
+            user_teacher.set_password('123456')
+            teacher_alvaro = Teacher(first_name='Alvaro Henry', last_name='Mamani Aliaga', user=user_teacher)
             db.session.add(user_teacher)
             db.session.add(teacher_alvaro)
             
             db.session.commit()
-            print(f"{len(students_created)} student users and 1 teacher user (Alvaro Mamani) created.")
+            print(f"{len(students_to_add)} student users and 1 teacher user (Alvaro Henry Mamani Aliaga) created.")
 
             # 2. Procesar imágenes de cada estudiante
-            # ... (esta sección se mantiene igual)
-            for student in students_created:
+            for student in students_to_add:
                 s_data = next((d for d in students_data if d['cui'] == student.cui), None)
                 if not s_data: continue
                 image_folder = s_data['image_folder']
@@ -139,7 +138,9 @@ def register_commands(app):
             courses_to_add = [
                 course_cloud,
                 Course(course_name='Trabajo Interdisciplinar 3', course_code='1705267', semester='10'),
-                # ... etc.
+                Course(course_name='Internet de las Cosas', course_code='1705268', semester='10'),
+                Course(course_name='Robotica (E)', course_code='1705269', semester='10'),
+                Course(course_name='Topicos en Ciberserguridad (E)', course_code='1705270', semester='10')
             ]
             db.session.add_all(courses_to_add)
             db.session.commit()
@@ -156,17 +157,34 @@ def register_commands(app):
             print(f"{len(schedules_to_add)} schedules for Cloud Computing created.")
 
             # 5. Matricular estudiantes en Cloud Computing
-            for s in students_created:
-                assign_to_course(s.id, course_cloud.id)
-            print(f"{len(students_created)} students enrolled in Cloud Computing.")
+            enrollments_to_add = []
+            for s in students_to_add:
+                success = assign_to_course(s.id, course_cloud.id)
+                if success:
+                    enrollment = Enrollment(student_id=s.id, course_id=course_cloud.id)
+                    enrollments_to_add.append(enrollment)
+                    db.session.add(enrollment)
+                    print(f"Embedding for student {s.id} assigned successfully — ready to enroll.")
+                else:
+                    print(f"Skipping enrollment for student {s.id}: embedding assignment failed.")
+            if enrollments_to_add:
+                db.session.commit()
+                print(f"{len(enrollments_to_add)} students enrolled in Cloud Computing (local DB).")
+            else:
+                print("No enrollments were added — all embedding assignments failed.")
 
             # 6. Registrar Asistencia
-            # ... (la lógica se mantiene, usando la lista `students_created` que ahora tiene 4)
             attendance_records = [
-                Attendance(student_id=students_created[0].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 21)),
-                Attendance(student_id=students_created[1].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 22)),
-                Attendance(student_id=students_created[2].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 23)),
-                Attendance(student_id=students_created[3].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 24)),
+                # 2 de Sep, 2025
+                Attendance(student_id=students_to_add[0].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 21)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 22)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 23)),
+                Attendance(student_id=students_to_add[3].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 24)),
+                # 3 de Sep, 2025
+                Attendance(student_id=students_to_add[0].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='presente', check_in_time=datetime(2025, 9, 3, 12, 25)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='ausente', check_in_time=datetime(2025, 9, 3, 12, 40)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='ausente', check_in_time=datetime(2025, 9, 3, 14, 1)),
+                Attendance(student_id=students_to_add[3].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='presente', check_in_time=datetime(2025, 9, 3, 12, 27)),
             ]
             db.session.add_all(attendance_records)
             db.session.commit()
