@@ -6,8 +6,68 @@ from app import db # Importa db
 from app.models.user import User, UserRole 
 from app.models.student import Student 
 from app.models.teacher import Teacher 
+from functools import wraps
 
 auth_bp = Blueprint('auth_bp', __name__, url_prefix='/auth')
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # Espera un header en formato "Bearer <token>"
+        if 'Authorization' in request.headers:
+            try:
+                token = request.headers['Authorization'].split(" ")[1]
+            except IndexError:
+                return jsonify({'message': 'Formato de token inválido'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Falta el token de autorización'}), 401
+
+        try:
+            # Decodifica el token para obtener los datos (payload)
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            # Busca al usuario en la BD usando el 'id' del token
+            current_user = User.query.get(data['sub'])
+            if not current_user:
+                return jsonify({'message': 'Usuario no encontrado'}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'El token ha expirado'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token inválido'}), 401
+        
+        # Pasa el objeto de usuario a la ruta
+        return f(current_user, *args, **kwargs)
+    return decorated
+
+# --- AÑADE ESTA NUEVA RUTA AL FINAL DEL ARCHIVO ---
+@auth_bp.route('/profile', methods=['GET'])
+@token_required # ¡Usamos el decorador para protegerla!
+def get_profile(current_user):
+    # 'current_user' es el objeto User que nos pasó el decorador
+    
+    if current_user.role == UserRole.STUDENT and current_user.student:
+        profile_data = {
+            "id": current_user.id,
+            "email": current_user.email,
+            "role": current_user.role.value,
+            "first_name": current_user.student.first_name,
+            "last_name": current_user.student.last_name,
+            "cui": current_user.student.cui
+        }
+    elif current_user.role == UserRole.TEACHER and current_user.teacher:
+        profile_data = {
+            "id": current_user.id,
+            "email": current_user.email,
+            "role": current_user.role.value,
+            "first_name": current_user.teacher.first_name,
+            "last_name": current_user.teacher.last_name,
+        }
+    else:
+        # Este caso podría ocurrir si hay inconsistencia en los datos
+        return jsonify({"message": "Perfil de usuario no encontrado"}), 404
+        
+    return jsonify(profile_data), 200
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

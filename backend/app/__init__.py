@@ -17,7 +17,10 @@ def create_app(config_class=Config):
     # Inicializar las extensiones con la aplicación
     db.init_app(app)
     ma.init_app(app)
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, 
+         resources={r"/*": {"origins": "*"}}, 
+         supports_credentials=True,
+         allow_headers=["Authorization", "Content-Type"])
 
     # Importar y registrar los Blueprints (grupos de rutas)
     from app.routes.student_routes import students_bp
