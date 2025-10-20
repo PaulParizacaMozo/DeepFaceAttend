@@ -9,6 +9,7 @@ interface HeaderProps {
 
 const Header = ({ title, showBackButton = false, onBack }: HeaderProps) => {
   const { user, logout } = useAuth();
+  console.log("User in <Header />:", user);
 
   const roleBadgeStyles = user?.role === 'student'
     ? 'bg-yellow-100 text-yellow-800' // Estilo para Estudiante

@@ -1,8 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import type { Student, Course, AttendanceRecord } from '../types';
+import type { Student, Course, AttendanceRecord, Schedule } from '../types';
 import Header from '../components/Header';
+import { useAuth } from '../hooks/useAuth';
+import api from '../services/api';
+
+const isScheduleActive = (schedule: Schedule): boolean => {
+  // ... (misma función de CourseCard.tsx)
+  const now = new Date();
+  const dayMap = [7, 1, 2, 3, 4, 5, 6];
+  const currentDay = dayMap[now.getDay()];
+  if (schedule.day_of_week !== currentDay) return false;
+  const [startHour, startMinute] = schedule.start_time.split(':').map(Number);
+  const [endHour, endMinute] = schedule.end_time.split(':').map(Number);
+  const startTime = new Date();
+  startTime.setHours(startHour, startMinute, 0, 0);
+  const endTime = new Date();
+  endTime.setHours(endHour, endMinute, 0, 0);
+  return now >= startTime && now <= endTime;
+};
 
 // --- Funciones de Utilidad (Versión más reciente y robusta) ---
 const generateSemesterDates = (start: string, end: string, daysOfWeek: number[]): string[] => {
@@ -44,6 +61,7 @@ const formatDateHeader = (dateString: string) => {
 const Attendance = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Estados para manejar toda la información dinámica
   const [students, setStudents] = useState<Student[]>([]);
@@ -52,6 +70,7 @@ const Attendance = () => {
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTakingAttendance, setIsTakingAttendance] = useState(false);
 
   // Hook para obtener todos los datos necesarios de la API
   useEffect(() => {
@@ -108,6 +127,25 @@ const Attendance = () => {
     fetchData();
   }, [courseCode]);
 
+  const handleTakeAttendance = async () => {
+    const activeSchedule = course?.schedules?.find(isScheduleActive);
+    if (!activeSchedule) {
+      alert("No hay una clase en sesión en este momento para iniciar la asistencia.");
+      return;
+    }
+
+    setIsTakingAttendance(true);
+    try {
+      const response = await api.post(`/schedules/${activeSchedule.id}/start-attendance`);
+      alert(response.data.message);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Ocurrió un error.";
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsTakingAttendance(false);
+    }
+  };
+
   // Función para obtener el símbolo de asistencia basado en datos reales
   const getStatusSymbol = (studentId: string, date: string) => {
     const status = attendance[studentId]?.[date];
@@ -123,6 +161,8 @@ const Attendance = () => {
     }
   };
 
+  const activeSchedule = course?.schedules?.find(isScheduleActive);
+
   return (
     <div className="min-h-screen bg-gray-100 pb-12">
       <Header
@@ -132,10 +172,22 @@ const Attendance = () => {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {user?.role === 'teacher' && course && (
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={handleTakeAttendance}
+              disabled={!activeSchedule || isTakingAttendance}
+              className="bg-green-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              title={!activeSchedule ? "Solo se puede tomar asistencia durante el horario de clase" : ""}
+            >
+              {isTakingAttendance ? 'Iniciando...' : 'Tomar Asistencia Ahora'}
+            </button>
+          </div>
+        )}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {loading && <p className="p-8 text-center text-gray-600">Cargando datos del curso...</p>}
           {error && <p className="p-8 text-center text-red-600">{error}</p>}
-          
+
           {!loading && !error && (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left border-collapse">
@@ -160,7 +212,7 @@ const Attendance = () => {
                 <tbody>
                   {students.map((student) => (
                     <tr key={student.id} className="border-b border-gray-200 last:border-0 hover:bg-gray-50/70 transition-colors duration-150">
-                      
+
                       {/* --- Celdas Fijas --- */}
                       <td className="sticky left-0 px-4 py-3 whitespace-nowrap text-sm text-gray-800 bg-white group-hover:bg-gray-50/70 w-32">
                         {student.cui}

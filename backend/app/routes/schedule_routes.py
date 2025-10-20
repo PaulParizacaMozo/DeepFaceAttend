@@ -1,9 +1,12 @@
+import requests
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.schedule import Schedule
 from app.schemas.schedule_schema import schedule_schema, schedules_schema
 from app.models.course import Course
 from app.models.student import Student
+from app.models.user import UserRole
+from app.routes.auth_routes import token_required
 from datetime import datetime
 
 schedules_bp = Blueprint('schedules_bp', __name__, url_prefix='/schedules')
@@ -33,3 +36,51 @@ def add_schedule():
     db.session.add(new_schedule)
     db.session.commit()
     return schedule_schema.jsonify(new_schedule), 201
+
+
+@schedules_bp.route('/<string:schedule_id>/start-attendance', methods=['POST'])
+@token_required
+def start_manual_attendance(current_user, schedule_id):
+    """
+    Permite a un profesor iniciar manualmente la captura de asistencia para un horario específico.
+    """
+    # 1. Validar que el schedule existe
+    schedule_item = Schedule.query.get_or_404(schedule_id)
+    course = schedule_item.course
+
+    # 2. Validar que el usuario es un profesor y está asignado a este curso
+    if current_user.role != UserRole.TEACHER:
+        return jsonify({"error": "Solo los profesores pueden iniciar la asistencia."}), 403
+
+    if not current_user.teacher or course.teacher_id != current_user.teacher.id:
+        return jsonify({"error": "No estás autorizado para iniciar la asistencia de este curso."}), 403
+
+    # (Opcional pero recomendado) Validar que la clase esté realmente en sesión
+    now = datetime.now()
+    current_day_of_week = now.weekday() + 1
+    current_time = now.time()
+
+    if not (schedule_item.day_of_week == current_day_of_week and 
+            schedule_item.start_time <= current_time and 
+            schedule_item.end_time >= current_time):
+        return jsonify({"message": "Esta clase no está en sesión en este momento."}), 400
+
+    # 3. Construir el payload y enviarlo al servicio de la cámara
+    payload = {
+        "scheduler_id": schedule_item.id
+    }
+    target_url = "http://localhost:4000/start_attendance_capture"
+
+    try:
+        response = requests.post(target_url, json=payload, timeout=10)
+        response.raise_for_status() # Lanza error si el status no es 2xx
+
+        print(f"Notificación manual enviada para schedule {schedule_item.id}. Respuesta: {response.json()}")
+        return jsonify({
+            "status": "success",
+            "message": f"Se inició la captura de asistencia para '{course.course_name}'.",
+            "details": response.json()
+        }), 200
+    except requests.exceptions.RequestException as e:
+        print(f"CRITICAL: No se pudo conectar con el servicio de asistencia en {target_url}. Error: {e}")
+        return jsonify({"error": "No se pudo conectar con el servicio de la cámara."}), 503

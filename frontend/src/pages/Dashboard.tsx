@@ -4,8 +4,10 @@ import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import Header from '../components/Header';
 import type { Course } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +19,7 @@ const Dashboard = () => {
         // --- CAMBIO CLAVE AQUÍ ---
         // Llamamos al nuevo endpoint que devuelve los cursos del usuario logueado.
         const response = await api.get('/auth/profile/courses');
+        console.log("Fetched courses:", response.data);
 
         // El resto de la lógica para formatear los datos no necesita cambios.
         const formattedCourses: Course[] = response.data.map((course: any) => ({
@@ -49,7 +52,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {courses.length > 0 ? (
               courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <CourseCard key={course.id} course={course} userRole={user?.role} />
               ))
             ) : (
               <p className="col-span-full text-center text-gray-500">
