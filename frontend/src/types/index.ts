@@ -1,3 +1,4 @@
+// types/index.ts
 export interface Schedule {
   id: string;
   day_of_week: number;

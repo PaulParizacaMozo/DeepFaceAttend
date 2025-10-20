@@ -5,7 +5,7 @@ from app.schemas.course_schema import course_schema, courses_schema
 
 courses_bp = Blueprint('courses_bp', __name__, url_prefix='/courses')
 
-@courses_bp.route('/', methods=['POST'])
+@courses_bp.route('/', methods=['POST'], strict_slashes=False)
 def add_course():
     data = request.get_json()
     new_course = course_schema.load(data, session=db.session)

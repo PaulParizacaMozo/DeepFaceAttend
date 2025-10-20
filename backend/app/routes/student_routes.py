@@ -1,3 +1,4 @@
+# app/routes/student_routes.py
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.student import Student

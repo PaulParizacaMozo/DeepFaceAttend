@@ -10,3 +10,4 @@ class Config:
     JSON_SORT_KEYS = False # Opcional: Mantiene el orden de los campos en las respuestas JSON
     CORS_HEADERS = 'Content-Type'
     CORS_RESOURCES = {r"/*": {"origins": "*"}}  # Configuración de CORS para todas las rutas
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'attendance-system-with-face-recognition'

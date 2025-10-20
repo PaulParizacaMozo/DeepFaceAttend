@@ -10,6 +10,9 @@ class Course(db.Model):
     course_name = db.Column(db.String(150), nullable=False)
     semester = db.Column(db.String(20), nullable=True)
 
+    teacher_id = db.Column(db.String(36), db.ForeignKey('teachers.id'), nullable=True)
+    teacher = db.relationship('Teacher', back_populates='courses')
+
     # Relaciones
     schedules = db.relationship('Schedule', back_populates='course', cascade="all, delete-orphan")
     enrollments = db.relationship('Enrollment', back_populates='course', cascade="all, delete-orphan")

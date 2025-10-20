@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 import { useAuth } from "../hooks/useAuth";
 
 interface HeaderProps {
@@ -7,7 +8,11 @@ interface HeaderProps {
 }
 
 const Header = ({ title, showBackButton = false, onBack }: HeaderProps) => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const roleBadgeStyles = user?.role === 'student'
+    ? 'bg-yellow-100 text-yellow-800' // Estilo para Estudiante
+    : 'bg-rose-100 text-rose-800'; // Estilo para Profesor
 
   return (
     <header className="bg-white shadow-sm p-4 mb-8 flex justify-between items-center">
@@ -25,12 +30,27 @@ const Header = ({ title, showBackButton = false, onBack }: HeaderProps) => {
         )}
         <h1 className="text-2xl font-medium text-gray-800">{title}</h1>
       </div>
-      <button
-        onClick={logout}
-        className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer"
-      >
-        Cerrar Sesión
-      </button>
+      
+      {/* Contenedor para el nombre, rol y botón de logout */}
+      <div className="flex items-center gap-4">
+        {user && (
+          // Contenedor para alinear nombre y rol
+          <div className="items-center gap-3 hidden sm:flex">
+            <span className="text-gray-800 font-bold tracking-wider">
+              {`${user.first_name} ${user.last_name}`}
+            </span>
+            <span className={`px-2.5 py-1 uppercase text-xs font-semibold rounded-full ${roleBadgeStyles}`}>
+              {user.role}
+            </span>
+          </div>
+        )}
+        <button
+          onClick={logout}
+          className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
     </header>
   );
 };
