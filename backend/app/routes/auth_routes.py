@@ -7,6 +7,7 @@ from app.models.user import User, UserRole
 from app.models.student import Student 
 from app.models.teacher import Teacher 
 from functools import wraps
+from app.schemas.course_schema import courses_schema
 
 auth_bp = Blueprint('auth_bp', __name__, url_prefix='/auth')
 
@@ -40,12 +41,9 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
-# --- AÑADE ESTA NUEVA RUTA AL FINAL DEL ARCHIVO ---
 @auth_bp.route('/profile', methods=['GET'])
-@token_required # ¡Usamos el decorador para protegerla!
-def get_profile(current_user):
-    # 'current_user' es el objeto User que nos pasó el decorador
-    
+@token_required 
+def get_profile(current_user):    
     if current_user.role == UserRole.STUDENT and current_user.student:
         profile_data = {
             "id": current_user.id,
@@ -68,6 +66,30 @@ def get_profile(current_user):
         return jsonify({"message": "Perfil de usuario no encontrado"}), 404
         
     return jsonify(profile_data), 200
+
+@auth_bp.route('/profile/courses', methods=['GET'])
+@token_required # Protegemos la ruta y obtenemos el usuario actual
+def get_my_courses(current_user):
+    """
+    Devuelve los cursos asociados al usuario autenticado.
+    - Si es Estudiante, devuelve los cursos en los que está matriculado.
+    - Si es Profesor, devuelve los cursos que tiene asignados.
+    """
+    courses = []
+    
+    # Lógica para Estudiantes
+    if current_user.role == UserRole.STUDENT:
+        # A través de la relación User -> Student -> Enrollments -> Course
+        if current_user.student and current_user.student.enrollments:
+            courses = [enrollment.course for enrollment in current_user.student.enrollments]
+
+    # Lógica para Profesores
+    elif current_user.role == UserRole.TEACHER:
+        # A través de la relación User -> Teacher -> Courses
+        if current_user.teacher:
+            courses = current_user.teacher.courses
+    
+    return courses_schema.jsonify(courses), 200
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

@@ -156,7 +156,7 @@ def register_commands(app):
             db.session.commit()
             print(f"{len(schedules_to_add)} schedules for Cloud Computing created.")
 
-            # 5. Matricular estudiantes en Cloud Computing
+            # 5.A Matricular estudiantes en Cloud Computing
             enrollments_to_add = []
             for s in students_to_add:
                 success = assign_to_course(s.id, course_cloud.id)
@@ -172,6 +172,24 @@ def register_commands(app):
                 print(f"{len(enrollments_to_add)} students enrolled in Cloud Computing (local DB).")
             else:
                 print("No enrollments were added — all embedding assignments failed.")
+            
+            # 5.B Matricular estudiantes en Trabajo Interdisciplinar 3
+            course_ti3 = Course.query.filter_by(course_code='1705267').first()
+            enrollments_ti3 = []
+            for s in students_to_add:
+                success = assign_to_course(s.id, course_ti3.id)
+                if success:
+                    enrollment = Enrollment(student_id=s.id, course_id=course_ti3.id)
+                    enrollments_ti3.append(enrollment)
+                    db.session.add(enrollment)
+                    print(f"Embedding for student {s.id} assigned successfully — ready to enroll in TI3.")
+                else:
+                    print(f"Skipping enrollment for student {s.id} in TI3: embedding assignment failed.")
+            if enrollments_ti3:
+                db.session.commit()
+                print(f"{len(enrollments_ti3)} students enrolled in Trabajo Interdisciplinar 3 (local DB).")
+            else:
+                print("No enrollments were added for TI3 — all embedding assignments failed.")
 
             # 6. Registrar Asistencia
             attendance_records = [
