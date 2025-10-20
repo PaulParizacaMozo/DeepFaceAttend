@@ -1,6 +1,6 @@
 // src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react';
-import api from '../services/api'; // Importamos nuestra instancia de api
+import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import Header from '../components/Header';
 import type { Course } from '../types';
@@ -11,11 +11,14 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchMyCourses = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/courses');
+        // --- CAMBIO CLAVE AQUÍ ---
+        // Llamamos al nuevo endpoint que devuelve los cursos del usuario logueado.
+        const response = await api.get('/auth/profile/courses');
 
+        // El resto de la lógica para formatear los datos no necesita cambios.
         const formattedCourses: Course[] = response.data.map((course: any) => ({
           id: course.id,
           title: course.course_name,
@@ -33,8 +36,8 @@ const Dashboard = () => {
       }
     };
 
-    fetchCourses();
-  }, []);
+    fetchMyCourses();
+  }, []); // El array de dependencias vacío asegura que se ejecute solo una vez.
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -49,7 +52,9 @@ const Dashboard = () => {
                 <CourseCard key={course.id} course={course} />
               ))
             ) : (
-              <p className="col-span-full text-center text-gray-500">No se encontraron cursos.</p>
+              <p className="col-span-full text-center text-gray-500">
+                No tienes cursos asignados o matriculados.
+              </p>
             )}
           </div>
         )}
