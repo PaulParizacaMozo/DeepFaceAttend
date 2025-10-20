@@ -191,7 +191,7 @@ def register_commands(app):
             else:
                 print("No enrollments were added for TI3 — all embedding assignments failed.")
 
-            # 6. Registrar Asistencia
+            # 6.A Registrar Asistencia en Cloud Computing
             attendance_records = [
                 # 2 de Sep, 2025
                 Attendance(student_id=students_to_add[0].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 21)),
@@ -207,6 +207,37 @@ def register_commands(app):
             db.session.add_all(attendance_records)
             db.session.commit()
             print(f"{len(attendance_records)} attendance records created.")
+
+            # 6.B Registrar Asistencia en Trabajo Interdisciplinar 3
+            course_ti3 = Course.query.filter_by(course_code='1705267').first()
+            attendance_ti3_records = [
+                # 8 de Sep, 2025 (sin cambios, ya estaba bien)
+                Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 5)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 10)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='ausente', check_in_time=datetime(2025, 9, 8, 10, 30)),
+                Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 15)),
+                
+                # 15 de Sep, 2025 (minutos corregidos)
+                Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 7)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='ausente', check_in_time=datetime(2025, 9, 15, 10, 12)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 15)),
+                Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 8)),
+                
+                # 22 de Sep, 2025 (minutos corregidos)
+                Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 50)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 55)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 0)), # Era 60
+                Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 5)), # Era 65
+                
+                # 29 de Sep, 2025 (sin cambios, ya estaba bien)
+                Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 20)),
+                Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 25)),
+                Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 30)),
+                Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 35)),
+            ]
+            db.session.add_all(attendance_ti3_records)
+            db.session.commit()
+            print(f"{len(attendance_ti3_records)} attendance records for TI3 created.")
 
             print("\nSample data inserted successfully!")
 
