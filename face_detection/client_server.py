@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 
 # --- Configuración de Endpoints ---
 PROCESS_URL = "http://127.0.0.1:4000/process_frame" # Servidor de procesamiento de IA (Puerto 4000)
-ATTENDANCE_URL = "http://127.0.0.1:5000/take_attendance" # Servidor de toma de asistencia (Puerto 5000)
+ATTENDANCE_URL = "http://127.0.0.1:5000/attendance/" # Servidor de toma de asistencia (Puerto 5000)
 CAMERA_INDEX = 0 # Índice de la cámara a usar
 
 # --- Recursos Globales Compartidos ---
@@ -62,7 +62,7 @@ def process_recognitions(recognized_faces, scheduler_id):
         if student_id and student_id != 'Unknown':
             payload = {
                 'student_id': student_id,
-                'scheduler_id': scheduler_id
+                'schedule_id': scheduler_id
             }
             try:
                 print(f"[JOB] Enviando asistencia para {student_id} a {ATTENDANCE_URL}...")
