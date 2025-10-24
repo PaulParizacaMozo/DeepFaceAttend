@@ -3,3 +3,4 @@ detected_faces
 *.png
 *.sqlite
 __pycache__
+*.pth

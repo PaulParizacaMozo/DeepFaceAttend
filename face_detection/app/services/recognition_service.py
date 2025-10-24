@@ -43,38 +43,6 @@ def find_best_match_vectorized(new_embedding, known_matrix, known_labels, thresh
 
     return known_labels[idx_max], float(best_sim)
 
-def recognize_faces_in_frame(frame, face_model, known_db):
-    faces = face_model.get(frame)
-    if not faces:
-        return []
-
-    recognized_faces = []
-    for face in faces:
-        if face.det_score < config.DETECTION_THRESHOLD:
-            continue
-
-        # --- Inicio del temporizador ---
-        start_time = time.perf_counter()
-
-        identity, confidence = find_best_match(
-            face.embedding, 
-            known_db, 
-            config.SIMILARITY_THRESHOLD
-        )
-
-        # --- Fin del temporizador ---
-        end_time = time.perf_counter()
-        elapsed_time = end_time - start_time
-        print(f"[DEBUG ANTERIOR] Tiempo ejecución find_best_match: {elapsed_time:.6f} segundos")
-
-        
-        recognized_faces.append({
-            "identity": identity,
-            "confidence": f"{confidence:.2f}" if identity != "Unknown" else "N/A"
-        })
-        
-    return recognized_faces
-
 def recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels):
     faces = face_model.get(frame)
     if not faces:
