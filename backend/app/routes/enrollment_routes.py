@@ -7,7 +7,7 @@ from app.services.enrollment_service import assign_to_course
 
 enrollments_bp = Blueprint('enrollments_bp', __name__, url_prefix='/enrollments')
 
-@enrollments_bp.route('/', methods=['POST'])
+@enrollments_bp.route('/', methods=['POST'], strict_slashes=False)
 def add_enrollment():
     data = request.get_json()
     # Asegúrate de que tanto student_id como course_id existan antes de matricular
