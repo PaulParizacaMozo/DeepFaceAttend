@@ -110,3 +110,11 @@ Se ha desarrollado una interfaz web utilizando React para facilitar la interacci
 
 - Exportar registros de asistencia en formato CSV.
 ![alt text](img/report_csv.png)
+
+
+## Aplicacion
+
+La aplicación se divide en 2 microservicios y un frontend:
+- **Microservicio de Reconocimiento Facial (`face-recognition-mcsv`)**: Implementado en Python, este microservicio maneja la captura de video, procesamiento de imágenes, extracción de embeddings y verificación de identidad.
+- **Microservicio de Gestión de Asistencia (`attendance-mcsv`)**: Implementado en Node.js con Express, este microservicio gestiona la base de datos SQLite, maneja las solicitudes de asistencia y proporciona una API RESTful para la comunicación con el frontend.
+- **Frontend Web (`frontend`)**: Implementado en React, este componente proporciona una interfaz de usuario intuitiva para administradores y profesores, permitiéndoles gestionar estudiantes, ver registros de asistencia y monitorear el estado del sistema en tiempo real.

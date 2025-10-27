@@ -1,4 +1,4 @@
-# backend/app/routes/course_routes.py
+# app/routes/course_routes.py
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.course import Course

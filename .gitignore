@@ -3,7 +3,7 @@
 # Ignora los módulos de Node en cualquier subdirectorio (ej: /frontend/node_modules)
 **/node_modules/
 
-# Ignora los entornos virtuales de Python en cualquier subdirectorio (ej: /backend/venv)
+# Ignora los entornos virtuales de Python en cualquier subdirectorio (ej: /attendance-mcsv/venv)
 **/venv/
 **/env/
 **/.venv/

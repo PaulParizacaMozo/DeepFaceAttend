@@ -1,4 +1,4 @@
-# backend/app/routes/enrollment_routes.py
+# app/routes/enrollment_routes.py
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.enrollment import Enrollment
