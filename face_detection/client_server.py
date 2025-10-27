@@ -31,6 +31,11 @@ def run_camera():
             continue
         with global_frame_lock:
             global_frame = frame.copy()
+
+        cv2.imshow("Camara en vivo", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Presiona 'q' para cerrar
+            break
+
         time.sleep(0.03)
 
 # --- 2. Helper: Enviar Frame para Procesar (Puerto 4000) ---
