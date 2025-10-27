@@ -56,9 +56,18 @@ const CourseCard = ({ course, userRole }: CourseCardProps) => {
     }
   };
 
+  const handleViewAttendance = () => {
+    if (userRole === 'teacher') {
+      navigate(`/attendance/${course.code}`);
+    } else {
+      navigate(`/my-attendance/${course.code}`); // Nueva ruta para estudiantes
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
-      <div>
+      {/* Hacemos el área de información principal cliqueable */}
+      <div onClick={handleViewAttendance} className="cursor-pointer">
         <h3 className="text-xl font-bold text-gray-800 mb-2">{course.title}</h3>
         <p className="text-sm text-gray-500 font-mono mb-4">{course.code}</p>
 
@@ -92,9 +101,10 @@ const CourseCard = ({ course, userRole }: CourseCardProps) => {
         )}
       </div>
 
+      {/* El botón también usa la navegación condicional */}
       <button
-        className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors mt-2"
-        onClick={() => navigate(`/attendance/${course.code}`)}
+        className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors mt-2 cursor-pointer"
+        onClick={handleViewAttendance}
       >
         Ver Registro de Asistencia
       </button>

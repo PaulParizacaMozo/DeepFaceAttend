@@ -7,7 +7,7 @@ from app.services.student_service import call_embedding_service
 
 students_bp = Blueprint('students_bp', __name__, url_prefix='/students')
 
-@students_bp.route('/', methods=['POST'])
+@students_bp.route('/', methods=['POST'], strict_slashes=False)
 def add_student():
     cui = request.form.get('cui')
     first_name = request.form.get('first_name')

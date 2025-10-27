@@ -10,6 +10,7 @@ interface UserProfile {
   role: 'student' | 'teacher';
   first_name: string;
   last_name: string;
+  cui?: string; // CUI solo para estudiantes
 }
 
 interface LoginCredentials {
