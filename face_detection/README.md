@@ -20,7 +20,7 @@ Sigue estos pasos para configurar el entorno de trabajo usando Conda.
 Crea un nuevo entorno de Conda con Python 3.9 para mantener las dependencias aisladas.
 
 ```bash
-conda create --name backend_facial python=3.9
+python3 -m venv venv
 ```
 
 ### **2. Activar el Entorno**
@@ -28,26 +28,20 @@ conda create --name backend_facial python=3.9
 Cada vez que trabajes en el proyecto, activa el entorno con el siguiente comando:
 
 ```bash
-conda activate backend_facial
+source venv/bin/activate
 ```
 
 ### **3. Instalar Dependencias de Python**
 
 Instala todas las librerías necesarias para el proyecto con un solo comando:
 
-```bash
+<!-- ```bash
 pip install Flask retina-face insightface onnxruntime opencv-python numpy requests pandas
-```
-
-### **4. Solucionar Compatibilidad (Importante para Linux)**
-
-La librería `insightface` a veces requiere una versión más reciente de `libstdc++`. Este comando la instala dentro de tu entorno Conda para evitar errores de importación.
+``` -->
 
 ```bash
-conda install -c conda-forge libstdcxx-ng
+pip install -r requirements.txt
 ```
-
----
 
 ## **API Endpoints**
 
