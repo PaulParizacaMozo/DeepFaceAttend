@@ -90,7 +90,8 @@ def register_commands(app):
             { 'cui': '20210001', 'first_name': 'Luciana Julissa', 'last_name': 'Huaman Coaquira', 'email': 'lhuaman@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'luciana_pics') },
             { 'cui': '20210002', 'first_name': 'Nelzon Jorge', 'last_name': 'Apaza Apaza', 'email': 'napaza@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'nelzon_pics') },
             { 'cui': '20210003', 'first_name': 'Kevin Joaquin', 'last_name': 'Chambi Tapia', 'email': 'kchambi@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'kevin_pics') },
-            { 'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla', 'email': 'bmaldonado@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'braulio_pics') }
+            { 'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla', 'email': 'bmaldonado@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'braulio_pics') },
+            { 'cui': '20210005', 'first_name': 'Paul Antony', 'last_name': 'Parizaca Mozo', 'email': 'pparizaca@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'paul_pics') }
         ]
         
         students_to_add = []
@@ -150,7 +151,7 @@ def register_commands(app):
             schedules_to_add = [
                 Schedule(course_id=course_cloud.id, day_of_week=2, start_time=time(12, 20), end_time=time(14, 0), location='Aula 301'),
                 Schedule(course_id=course_cloud.id, day_of_week=3, start_time=time(12, 20), end_time=time(14, 0), location='Aula 301'),
-                Schedule(course_id=course_cloud.id, day_of_week=4, start_time=time(12, 20), end_time=time(14, 0), location='Laboratorio 2')
+                Schedule(course_id=course_cloud.id, day_of_week=1, start_time=time(12, 20), end_time=time(14, 0), location='Laboratorio 2')
             ]
             db.session.add_all(schedules_to_add)
             db.session.commit()
@@ -198,11 +199,13 @@ def register_commands(app):
                 Attendance(student_id=students_to_add[1].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 22)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 23)),
                 Attendance(student_id=students_to_add[3].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 24)),
+                Attendance(student_id=students_to_add[4].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 2), status='presente', check_in_time=datetime(2025, 9, 2, 12, 24)),
                 # 3 de Sep, 2025
                 Attendance(student_id=students_to_add[0].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='presente', check_in_time=datetime(2025, 9, 3, 12, 25)),
                 Attendance(student_id=students_to_add[1].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='ausente', check_in_time=datetime(2025, 9, 3, 12, 40)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='ausente', check_in_time=datetime(2025, 9, 3, 14, 1)),
                 Attendance(student_id=students_to_add[3].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='presente', check_in_time=datetime(2025, 9, 3, 12, 27)),
+                Attendance(student_id=students_to_add[4].id, course_id=course_cloud.id, attendance_date=date(2025, 9, 3), status='presente', check_in_time=datetime(2025, 9, 3, 12, 27)),
             ]
             db.session.add_all(attendance_records)
             db.session.commit()
@@ -216,24 +219,28 @@ def register_commands(app):
                 Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 10)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='ausente', check_in_time=datetime(2025, 9, 8, 10, 30)),
                 Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 15)),
+                Attendance(student_id=students_to_add[4].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 8), status='presente', check_in_time=datetime(2025, 9, 8, 10, 15)),
                 
                 # 15 de Sep, 2025 (minutos corregidos)
                 Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 7)),
                 Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='ausente', check_in_time=datetime(2025, 9, 15, 10, 12)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 15)),
                 Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 8)),
+                Attendance(student_id=students_to_add[4].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 15), status='presente', check_in_time=datetime(2025, 9, 15, 10, 8)),
                 
                 # 22 de Sep, 2025 (minutos corregidos)
                 Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 50)),
                 Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 55)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 0)), # Era 60
                 Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 5)), # Era 65
+                Attendance(student_id=students_to_add[4].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 22), status='presente', check_in_time=datetime(2025, 9, 22, 10, 5)), # Era 65
                 
                 # 29 de Sep, 2025 (sin cambios, ya estaba bien)
                 Attendance(student_id=students_to_add[0].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 20)),
                 Attendance(student_id=students_to_add[1].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 25)),
                 Attendance(student_id=students_to_add[2].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 30)),
                 Attendance(student_id=students_to_add[3].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 35)),
+                Attendance(student_id=students_to_add[4].id, course_id=course_ti3.id, attendance_date=date(2025, 9, 29), status='presente', check_in_time=datetime(2025, 9, 29, 10, 35)),
             ]
             db.session.add_all(attendance_ti3_records)
             db.session.commit()
