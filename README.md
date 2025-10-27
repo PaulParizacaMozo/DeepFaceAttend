@@ -102,3 +102,11 @@ Se ha desarrollado una interfaz web utilizando React para facilitar la interacci
 ![Login](img/desktop_login.png) 
 ![Dashboard](img/desktop_dashboard.png) 
 ![Attendance](img/desktop_attendance.png)
+
+### Funcionalidades en Modo Profesor
+
+- Exportar registros de asistencia en formato PDF.
+![alt text](img/report_pdf.png)
+
+- Exportar registros de asistencia en formato CSV.
+![alt text](img/report_csv.png)
