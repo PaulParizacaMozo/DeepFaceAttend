@@ -14,11 +14,11 @@ greenlet==3.2.4
 idna==3.11
 itsdangerous==2.2.0
 Jinja2==3.1.6
-jwt==1.4.0
 MarkupSafe==3.0.3
 marshmallow==4.0.1
 marshmallow-sqlalchemy==1.4.2
 pycparser==2.23
+PyJWT==2.10.1
 requests==2.32.5
 SQLAlchemy==2.0.44
 typing_extensions==4.15.0
