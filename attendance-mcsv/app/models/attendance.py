@@ -10,7 +10,7 @@ class Attendance(db.Model):
     attendance_date = db.Column(db.Date, nullable=False, default=datetime.date.today)
     # Status puede ser: 'presente', 'tarde', 'ausente'
     status = db.Column(db.String(10), nullable=False)
-    check_in_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    check_in_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
 
     # Relaciones
     student = db.relationship('Student', back_populates='attendances')
