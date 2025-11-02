@@ -51,7 +51,7 @@ def process_frame():
 
     if frame is None:
         return jsonify({"error": "Could not decode image."}), 400
-    results = recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels)
+    results = recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels, schedule_id)
     return jsonify({"recognized_faces": results})
 
 

@@ -4,6 +4,13 @@ from .. import config
 import time
 import requests
 from collections import defaultdict
+import os
+import datetime
+
+base_dir = os.path.abspath(os.path.dirname(__file__))
+CAPTURES_DIR = os.path.join(base_dir, '..', '..', 'captures')
+os.makedirs(CAPTURES_DIR, exist_ok=True)
+print(f"[INFO] Directorio de capturas asegurado en: {CAPTURES_DIR}")
 
 CAMERA_CLIENT_URL = "http://localhost:6000/start_capture" 
 
@@ -43,7 +50,7 @@ def find_best_match_vectorized(new_embedding, known_matrix, known_labels, thresh
 
     return known_labels[idx_max], float(best_sim)
 
-def recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels):
+def recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels, schedule_id=None):
     faces = face_model.get(frame)
     if not faces:
         return []
@@ -64,6 +71,40 @@ def recognize_faces_in_frame_2(frame, face_model, known_matrix, known_labels):
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
         print(f"[DEBUG] Tiempo ejecución find_best_match_vectorized: {elapsed_time:.6f} segundos")
+
+        # --- INICIO DE LÓGICA PARA GUARDAR IMAGEN ---
+        try:
+            # 1. Crear un nombre de archivo único
+            now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            file_identity = identity.replace(" ", "_").replace("/", "_")
+            schedule_str = schedule_id or "NO_SCHEDULE"
+            
+            # 2. Crear subcarpeta para el schedule (ej: /captures/sched_abc123)
+            schedule_capture_dir = os.path.join(CAPTURES_DIR, schedule_str)
+            os.makedirs(schedule_capture_dir, exist_ok=True)
+            
+            # 3. Definir el nombre del archivo (ej: Kevin_Chambi_20251101_203000_123456.jpg)
+            filename = f"{file_identity}_{now_str}.jpg"
+            filepath = os.path.join(schedule_capture_dir, filename)
+
+            # 4. Recortar la cara del frame original usando el bbox
+            [x1, y1, x2, y2] = [int(v) for v in face.bbox]
+            # Asegurar que las coordenadas no estén fuera de los límites
+            y1_crop, y2_crop = max(0, y1), min(frame.shape[0], y2)
+            x1_crop, x2_crop = max(0, x1), min(frame.shape[1], x2)
+            
+            cropped_face = frame[y1_crop:y2_crop, x1_crop:x2_crop]
+
+            # 5. Guardar la imagen si el recorte es válido
+            if cropped_face.size > 0:
+                cv2.imwrite(filepath, cropped_face)
+                print(f"[DEBUG] Rostro guardado en: {filepath}")
+            else:
+                print(f"[DEBUG] No se pudo guardar el rostro (tamaño 0) para {identity}")
+                
+        except Exception as e:
+            print(f"[ERROR] No se pudo guardar la imagen del rostro: {e}")
+        # --- FIN DE LÓGICA PARA GUARDAR IMAGEN ---
 
         recognized_faces.append({
             "identity": identity,

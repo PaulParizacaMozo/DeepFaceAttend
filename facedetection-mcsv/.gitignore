@@ -4,3 +4,4 @@ detected_faces
 *.sqlite
 __pycache__
 *.pth
+captures/*
