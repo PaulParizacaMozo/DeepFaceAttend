@@ -44,7 +44,9 @@ def find_best_match_vectorized(new_embedding, known_matrix, known_labels, thresh
     # Buscar el índice con mayor similitud
     idx_max = np.argmax(similarities)
     best_sim = similarities[idx_max]
-
+    print(similarities)
+    print(f"[DEBUG] Mejor similitud: {best_sim} ")
+    print(threshold)
     if best_sim < threshold:
         return "Unknown", best_sim
 
@@ -119,7 +121,7 @@ def capture_and_recognize_faces(scheduler_id):
     payload = {
         "scheduler_id": scheduler_id,
         "duration": 1,  # minutos
-        "interval": 30  # segundos
+        "interval": 20  # segundos
     }
     try:
         response = requests.post(CAMERA_CLIENT_URL, json=payload, timeout=10)

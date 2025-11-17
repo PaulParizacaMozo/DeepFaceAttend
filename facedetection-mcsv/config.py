@@ -7,7 +7,7 @@ DB_PATH = os.path.join(os.path.dirname(PROJECT_ROOT), 'attendance-mcsv', 'databa
 CSV_OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'embeddings_csvs')
 
 # --- Model and Recognition Parameters (No changes needed here) ---
-SIMILARITY_THRESHOLD = 0.39
+SIMILARITY_THRESHOLD = 0.20
 DETECTION_THRESHOLD = 0.7
 
 # --- Network Configuration (No changes needed here) ---
