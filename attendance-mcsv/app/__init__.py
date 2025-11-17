@@ -115,8 +115,15 @@ def register_commands(app):
             db.session.add(user_teacher)
             db.session.add(teacher_alvaro)
             
+            # Crear Profesora Yessenia Yari con su cuenta de Usuario
+            user_teacher_yessenia = User(email='yyari@unsa.edu.pe', role=UserRole.TEACHER)
+            user_teacher_yessenia.set_password('123456')
+            teacher_yessenia = Teacher(first_name='Yessenia Deysi', last_name='Yari Ramos', user=user_teacher_yessenia)
+            db.session.add(user_teacher_yessenia)
+            db.session.add(teacher_yessenia)
+
             db.session.commit()
-            print(f"{len(students_to_add)} student users and 1 teacher user (Alvaro Henry Mamani Aliaga) created.")
+            print(f"{len(students_to_add)} students and 2 teachers created.")
 
             # 2. Procesar imágenes de cada estudiante
             for student in students_to_add:
@@ -136,9 +143,10 @@ def register_commands(app):
 
             # 3. Crear Cursos y asignarlo al profesor
             course_cloud = Course(course_name='Cloud Computing', course_code='1705265', semester='10', teacher_id=teacher_alvaro.id)
+            course_ti3 = Course(course_name='Trabajo Interdisciplinar 3', course_code='1705267', semester='10', teacher_id=teacher_yessenia.id)
             courses_to_add = [
                 course_cloud,
-                Course(course_name='Trabajo Interdisciplinar 3', course_code='1705267', semester='10'),
+                course_ti3,
                 Course(course_name='Internet de las Cosas', course_code='1705268', semester='10'),
                 Course(course_name='Robotica (E)', course_code='1705269', semester='10'),
                 Course(course_name='Topicos en Ciberserguridad (E)', course_code='1705270', semester='10')
@@ -149,9 +157,14 @@ def register_commands(app):
 
             # 4. Crear Horarios (para Cloud Computing)
             schedules_to_add = [
+                # Cloud Computing (Lun, Mar, Mie)
                 Schedule(course_id=course_cloud.id, day_of_week=2, start_time=time(12, 20), end_time=time(14, 0), location='Aula 301'),
                 Schedule(course_id=course_cloud.id, day_of_week=3, start_time=time(12, 20), end_time=time(14, 0), location='Aula 301'),
-                Schedule(course_id=course_cloud.id, day_of_week=1, start_time=time(12, 20), end_time=time(14, 0), location='Laboratorio 2')
+                Schedule(course_id=course_cloud.id, day_of_week=1, start_time=time(12, 20), end_time=time(14, 0), location='Laboratorio 2'),
+
+                # TI3 (Lun, Vie)
+                Schedule(course_id=course_ti3.id, day_of_week=1, start_time=time(14, 0), end_time=time(15, 40), location='Aula 202'),
+                Schedule(course_id=course_ti3.id, day_of_week=5, start_time=time(10, 40), end_time=time(12, 20), location='Aula 202'),
             ]
             db.session.add_all(schedules_to_add)
             db.session.commit()
