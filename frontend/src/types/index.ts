@@ -29,3 +29,11 @@ export interface AttendanceRecord {
   attendance_date: string; // Formato 'YYYY-MM-DD'
   status: 'presente' | 'tarde' | 'ausente';
 }
+
+export interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: 'teacher' | 'student';
+}
