@@ -1,8 +1,11 @@
 // src/services/api.ts
 import axios from 'axios';
 
+// import from environment variable
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: backendUrl,
   headers: {
     'Content-Type': 'application/json',
   },

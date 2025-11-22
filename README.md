@@ -19,6 +19,7 @@ Este proyecto es el resultado de una investigación en la Universidad Nacional d
 
 ## Tabla de Contenidos
 
+- [Ejecucion del Proyecto](#ejecucion-del-proyecto)
 - [Descripción del Proyecto](#descripción-del-proyecto)
 - [Metodología: El Pipeline Propuesto](#metodología-el-pipeline-propuesto)
   - [Fase 0: Construcción del Dataset de Referencia](#fase-0-construcción-del-dataset-de-referencia)
@@ -29,6 +30,18 @@ Este proyecto es el resultado de una investigación en la Universidad Nacional d
 - [Herramientas y Tecnologías](#herramientas-y-tecnologías)
 
 ---
+
+## Ejecucion del Proyecto
+
+- Para ejecutar el frontend y attendance-mcsv:
+```bash
+docker-compose up --build -d
+```
+- Acceder a la interfaz web en: `http://localhost:8080`
+- Para detener los contenedores:
+```bash
+docker-compose down
+```
 
 ## Descripción del Proyecto
 
