@@ -103,3 +103,75 @@ def search_attendance():
     print(f"Registros encontrados en la BD: {records}")
     
     return attendances_schema.jsonify(records), 200
+
+
+
+@attendance_bp.route('/batch', methods=['POST'])
+def batch_update_attendance():
+    """
+    Permite crear o actualizar múltiples registros de asistencia a la vez.
+    Espera un JSON: { "records": [ { "student_id": "...", "course_id": "...", "attendance_date": "YYYY-MM-DD", "status": "..." } ] }
+    """
+    try:
+        data = request.get_json()
+        records = data.get('records', [])
+
+        if not records:
+            return jsonify({"message": "No se proporcionaron registros"}), 400
+
+        processed_count = 0
+
+        for item in records:
+            student_id = item.get('student_id')
+            course_id = item.get('course_id')
+            date_str = item.get('attendance_date')
+            status = item.get('status')
+
+            # Validar campos básicos
+            if not all([student_id, course_id, date_str, status]):
+                continue
+
+            # Convertir fecha string (YYYY-MM-DD) a objeto date de Python
+            try:
+                attendance_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                # Si la fecha viene mal formateada, saltamos este registro
+                continue
+
+            # Buscar si ya existe un registro para este estudiante, curso y fecha
+            existing_record = Attendance.query.filter_by(
+                student_id=student_id,
+                course_id=course_id,
+                attendance_date=attendance_date
+            ).first()
+
+            if existing_record:
+                # UPDATE: Si existe, actualizamos el estado
+                existing_record.status = status
+                # Opcional: Actualizar la hora de modificación si lo deseas
+                # existing_record.check_in_time = datetime.now()
+            else:
+                # INSERT: Si no existe, creamos uno nuevo
+                new_record = Attendance(
+                    student_id=student_id,
+                    course_id=course_id,
+                    attendance_date=attendance_date,
+                    status=status,
+                    check_in_time=datetime.now() # Hora actual del servidor como marca de tiempo
+                )
+                db.session.add(new_record)
+            
+            processed_count += 1
+
+        # Guardar todos los cambios en una sola transacción
+        db.session.commit()
+
+        return jsonify({
+            "message": "Asistencia actualizada correctamente",
+            "processed_records": processed_count
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error en batch update: {e}")
+        return jsonify({"message": "Error interno al procesar la asistencia"}), 500
