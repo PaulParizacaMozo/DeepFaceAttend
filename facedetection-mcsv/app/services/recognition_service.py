@@ -165,7 +165,7 @@ def capture_and_recognize_faces(scheduler_id):
     payload = {
         "scheduler_id": scheduler_id,
         "duration": 1,  # minutos
-        "interval": 20  # segundos
+        "interval": 100  # segundos
     }
     try:
         response = requests.post(CAMERA_CLIENT_URL, json=payload, timeout=10)
