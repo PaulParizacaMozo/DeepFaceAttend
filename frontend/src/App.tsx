@@ -5,8 +5,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Attendance from './pages/Attendance';
 import AttendanceStudent from './pages/AttendanceStudent.tsx';
+import EditAttendance from './pages/EditAttendance'; 
 import ProtectedRoute from './components/ProtectedRoute';
-// import 'App.css';
 
 function App() {
   return (
@@ -15,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
           <Route
             path="/dashboard"
             element={
@@ -24,35 +25,30 @@ function App() {
             }
           />
 
-          {/* Ruta del Profesor */}
+          {/* Ruta del Profesor: Ver/Tomar Asistencia */}
           <Route 
             path="/attendance/:courseCode" 
             element={<ProtectedRoute><Attendance /></ProtectedRoute>} 
           />
+
+          {/* --- 2. AÑADIR RUTA: Editar Asistencia (Profesor) --- */}
+          <Route 
+            path="/attendance/:courseCode/edit" 
+            element={<ProtectedRoute><EditAttendance /></ProtectedRoute>} 
+          />
           
-          {/* --- 2. Añade la nueva ruta del Estudiante --- */}
+          {/* Ruta del Estudiante */}
           <Route 
             path="/my-attendance/:courseCode" 
             element={<ProtectedRoute><AttendanceStudent /></ProtectedRoute>} 
           />
 
-          {/* <Route
-            path="/course/:courseId"
-            element={
-              <ProtectedRoute>
-                <Attendance />
-              </ProtectedRoute>
-            }
-          /> */}
-
-          {/* Redirige esta ruta antigua por si acaso */}
           <Route
             path="/course/:courseId"
             element={<Navigate to="/dashboard" />}
           />
 
-          {/* <Route path="/attendance/:courseCode" element={<Attendance />} /> */}
-          {/* Redirección por defecto a la página de login si no hay ruta */}
+          {/* Redirección por defecto */}
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </AuthProvider>
