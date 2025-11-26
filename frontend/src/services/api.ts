@@ -2,10 +2,10 @@
 import axios from 'axios';
 
 // import from environment variable
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const attendanceMcsvUrl = import.meta.env.VITE_ATTENDANCE_MCSV_URL || 'http://localhost:5000';
 
 const api = axios.create({
-  baseURL: backendUrl,
+  baseURL: attendanceMcsvUrl,
   headers: {
     'Content-Type': 'application/json',
   },
