@@ -84,3 +84,36 @@ def start_manual_attendance(current_user, schedule_id):
     except requests.exceptions.RequestException as e:
         print(f"CRITICAL: No se pudo conectar con el servicio de asistencia en {target_url}. Error: {e}")
         return jsonify({"error": "No se pudo conectar con el servicio de la cámara."}), 503
+    
+@schedules_bp.route('/<string:schedule_id>/course', methods=['GET'])
+def get_course_by_schedule(schedule_id):
+    """
+    Devuelve la info del curso asociado a un schedule dado.
+
+    GET /schedules/<schedule_id>/course
+
+    Respuesta:
+    {
+      "course_id": "...",
+      "course_code": "...",
+      "course_name": "...",
+      "semester": "..."
+    }
+    """
+    # 1. Buscar el schedule
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({"error": f"Schedule '{schedule_id}' not found."}), 404
+
+    # 2. Usar la relación hacia Course
+    course = schedule.course
+    if not course:
+        return jsonify({"error": f"No course associated to schedule '{schedule_id}'."}), 404
+
+    # 3. Devolver solo lo que necesitas para el front
+    return jsonify({
+        "course_id": course.id,
+        "course_code": course.course_code,
+        "course_name": course.course_name,
+        "semester": course.semester
+    }), 200

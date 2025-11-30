@@ -8,6 +8,8 @@ import requests
 import numpy as np
 import json
 
+from app.services.unknown_face_service import resolve_unknown_faces_for_student
+
 unknown_face_bp = Blueprint('unknown_face_bp', __name__, url_prefix='/unknown-faces')
 FACEDETECTION_SERVICE_URL = "http://localhost:4000/processing/extract-embedding"
 
@@ -152,3 +154,147 @@ def match_unknown_faces():
     final_response.sort(key=lambda x: x['date'], reverse=True)
 
     return jsonify(final_response), 200
+
+
+# ==========================================================
+# Resolver unknown faces para un student_id dado
+# ==========================================================
+@unknown_face_bp.route('/resolve', methods=['POST'])
+def resolve_unknown_faces():
+    """
+    Body JSON:
+    {
+      "student_id": "719e8e13-9e56-49d6-a86d-47a8abeb6737",
+      "threshold": 0.3   # opcional
+    }
+
+    - Resuelve UnknownFace para ese student_id.
+    - Devuelve unknown_faces resueltos (sin embedding).
+    - Devuelve cursos detectados para que el front decida dónde matricular.
+    """
+    data = request.get_json() or {}
+
+    student_id = data.get('student_id')
+    if not student_id:
+        return jsonify({"error": "Field 'student_id' is required."}), 400
+
+    if not isinstance(student_id, str):
+        student_id = str(student_id)
+
+    threshold = data.get('threshold')
+
+    try:
+        matched, detected_courses = resolve_unknown_faces_for_student(
+            student_id,
+            threshold=threshold
+        )
+    except ValueError as ve:
+        # student no existe
+        return jsonify({"error": str(ve)}), 404
+    except RuntimeError as re:
+        # sin embedding en facedetection
+        return jsonify({"error": str(re)}), 400
+    except Exception as e:
+        print(f"[ERROR] Failed to resolve unknown faces: {e}")
+        return jsonify({"error": "Internal error while resolving unknown faces."}), 500
+
+    # ---- matches: incluye course_id / course_name para tu UI ----
+    matches_json = []
+    for uf, sim in matched:
+        schedule = uf.schedule            # relación UnknownFace -> Schedule
+        course = schedule.course if schedule else None
+
+        matches_json.append({
+            "id": uf.id,
+            "schedule_id": uf.schedule_id,
+            "course_id": course.id if course else None,
+            "course_name": course.course_name if course else None,
+            "image_path": uf.image_path,
+            "detected_at": uf.detected_at.isoformat(),
+            "student_id": uf.student_id,
+            "resolved": uf.resolved,
+            "similarity": sim,
+        })
+
+    # ---- cursos detectados (para la columna COURSES) ----
+    courses_json = []
+    for c in detected_courses:
+        courses_json.append({
+            "id": c.id,
+            "course_code": c.course_code,
+            "course_name": c.course_name,
+            "semester": c.semester,
+        })
+
+    return jsonify({
+        "status": "success",
+        "student_id": student_id,
+        "threshold": threshold if threshold is not None else None,
+        "matched_count": len(matches_json),
+        "matches": matches_json,
+        "detected_courses_count": len(courses_json),
+        "detected_courses": courses_json
+    }), 200
+
+@unknown_face_bp.route('/<int:unknown_id>/resolve-finish', methods=['POST'])
+def finalize_unknown_face(unknown_id):
+    """
+    Marca un UnknownFace como resuelto.
+
+    POST /unknown-faces/<unknown_id>/resolve-finish
+
+    Sin body (o lo ignoramos). Solo:
+      - uf.resolved = True
+      - NO toca uf.student_id
+    """
+    # 1. Buscar UnknownFace
+    uf = UnknownFace.query.get(unknown_id)
+    if not uf:
+        return jsonify({"error": f"UnknownFace with id={unknown_id} not found."}), 404
+
+    # 2. Si ya estaba resuelto, devolver info y salir
+    if uf.resolved:
+        schedule = uf.schedule
+        course = schedule.course if schedule else None
+        return jsonify({
+            "status": "already_resolved",
+            "match": {
+                "id": uf.id,
+                "schedule_id": uf.schedule_id,
+                "course_id": course.id if course else None,
+                "course_name": course.course_name if course else None,
+                "image_path": uf.image_path,
+                "detected_at": uf.detected_at.isoformat(),
+                "student_id": uf.student_id,   # puede ser None
+                "resolved": uf.resolved,
+            }
+        }), 200
+
+    # 3. Marcar como resuelto
+    uf.resolved = True
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Failed to finalize unknown face {unknown_id}: {e}")
+        return jsonify({"error": "Database error while finalizing unknown face."}), 500
+
+    # 4. Respuesta con info útil para el front
+    schedule = uf.schedule
+    course = schedule.course if schedule else None
+
+    return jsonify({
+        "status": "success",
+        "message": f"UnknownFace {unknown_id} marked as resolved.",
+        "match": {
+            "id": uf.id,
+            "schedule_id": uf.schedule_id,
+            "course_id": course.id if course else None,
+            "course_name": course.course_name if course else None,
+            "image_path": uf.image_path,
+            "detected_at": uf.detected_at.isoformat(),
+            "student_id": uf.student_id,   # sigue como esté (probablemente None)
+            "resolved": uf.resolved,
+        }
+    }), 200

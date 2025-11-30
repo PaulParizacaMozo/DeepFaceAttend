@@ -17,7 +17,7 @@ class UnknownFace(db.Model):
     detected_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     # Para el futuro: cuando asocies este unknown a un estudiante real
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=True)
+    student_id = db.Column(db.String(36), db.ForeignKey('students.id'), nullable=True)
     resolved = db.Column(db.Boolean, nullable=False, default=False)
 
     # Relaciones opcionales (si quieres navegarlas)
