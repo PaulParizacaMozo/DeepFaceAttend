@@ -1,138 +1,178 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import type { Student } from '../types';
-import Header from '../components/Header';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import type { Student, Course, AttendanceRecord } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import { usePolling } from '../hooks/usePolling';
+import api from '../services/api';
 
-// --- Funciones de Utilidad (sin cambios) ---
-const generateSemesterDates = (start: string, end: string, daysOfWeek: number[]): string[] => {
-  const dates = [];
-  let currentDate = new Date(start);
-  const endDate = new Date(end);
-  while (currentDate <= endDate) {
-    if (daysOfWeek.includes(currentDate.getDay())) {
-      dates.push(currentDate.toISOString().split('T')[0]);
-    }
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  return dates;
-};
+// Componentes modularizados
+import AttendanceHeader from '../components/attendance/AttendanceHeader';
+import AttendanceControls from '../components/attendance/AttendanceControls';
+import AttendanceTable from '../components/attendance/AttendanceTable';
 
-const attendanceDates = generateSemesterDates('2025-09-01', '2025-12-31', [1, 3]);
+// Utilidades
+import { isScheduleActive, generateSemesterDates } from '../utils/attendanceHelpers';
 
-const monthAbbreviations: { [key: string]: string } = {
-  '01': 'ene', '02': 'feb', '03': 'mar', '04': 'abr',
-  '05': 'may', '06': 'jun', '07': 'jul', '08': 'ago',
-  '09': 'sep', '10': 'oct', '11': 'nov', '12': 'dic',
-};
-
-const formatDateHeader = (dateString: string) => {
-  const [_, month, day] = dateString.split('-');
-  const monthAbbr = monthAbbreviations[month] || '';
-  return (
-    <div className="flex flex-col items-center justify-center h-full">
-      <span className="font-bold text-gray-800">{day}</span>
-      <span className="text-xs font-medium text-gray-500 uppercase">{monthAbbr}</span>
-    </div>
-  );
-};
-
-// --- Datos del Componente (sin cambios) ---
-const courseDetails: { [key: string]: string } = {
-  '1705267': 'Trabajo Interdisciplinar 3',
-  '1705265': 'Cloud Computing',
-  '1705268': 'Internet de las Cosas',
-  '1705269': 'Robotica (E)',
-  '1705270': 'Topicos en Ciberserguridad (E)',
-};
-
-
+// --- Componente Principal ---
 const Attendance = () => {
-  const { courseId } = useParams<{ courseId: string }>();
-  const navigate = useNavigate();
+  const { courseCode } = useParams<{ courseCode: string }>();
+  const { user } = useAuth();
+
   const [students, setStudents] = useState<Student[]>([]);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [attendance, setAttendance] = useState<{ [studentId: string]: { [date: string]: string } }>({});
+  const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTakingAttendance, setIsTakingAttendance] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const courseTitle = courseId ? courseDetails[courseId] : 'Curso no encontrado';
-
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5000/students');
-        setStudents(response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching students:", err);
-        setError('No se pudo cargar la lista de estudiantes. Asegúrate de que el backend esté funcionando.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStudents();
+  // Función para cargar datos de asistencia
+  const fetchAttendanceData = useCallback(async (courseId: string) => {
+    try {
+      const attendanceRes = await api.post('/attendance/search', { course_id: courseId });
+      
+      const attendanceMap: { [studentId: string]: { [date: string]: string } } = {};
+      attendanceRes.data.forEach((record: AttendanceRecord) => {
+        if (!attendanceMap[record.student_id]) { 
+          attendanceMap[record.student_id] = {}; 
+        }
+        attendanceMap[record.student_id][record.attendance_date] = record.status;
+      });
+      
+      setAttendance(attendanceMap);
+      setLastUpdate(new Date());
+    } catch (err) {
+      console.error("Error fetching attendance data:", err);
+      // No mostramos error al usuario para actualizaciones automáticas
+    }
   }, []);
 
-  const getStatusSymbol = (studentId: string, date: string) => {
-    const hash = (studentId + date).split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-    const value = hash % 10;
-    if (value < 7) return <span className="text-green-500 text-2xl" title="Presente">●</span>;
-    if (value < 9) return <span className="text-yellow-500 text-2xl" title="Tarde">●</span>;
-    return <span className="text-red-500 text-2xl" title="Ausente">●</span>;
+  // Función para cargar todos los datos iniciales
+  const fetchAllData = useCallback(async () => {
+    if (!courseCode) return;
+    
+    try {
+      setLoading(true);
+      const courseRes = await api.get(`/courses/${courseCode}`);
+      const courseData = courseRes.data;
+      const courseId = courseData.id;
+
+      const [studentsRes, enrollmentsRes] = await Promise.all([
+        api.get('/students'),
+        api.get('/enrollments'),
+      ]);
+
+      const formattedCourse: Course = { 
+        id: courseData.id, 
+        title: courseData.course_name, 
+        code: courseData.course_code, 
+        schedules: courseData.schedules 
+      };
+      
+      setCourse(formattedCourse);
+      
+      if (formattedCourse.schedules && formattedCourse.schedules.length > 0) {
+        const daysOfWeek = formattedCourse.schedules.map(s => s.day_of_week);
+        setAttendanceDates(generateSemesterDates('2025-09-01', '2025-12-20', [...new Set(daysOfWeek)]));
+      }
+
+      const enrollmentsForCourse = enrollmentsRes.data.filter((e: any) => e.course_id === courseId);
+      const studentIdsForCourse = new Set(enrollmentsForCourse.map((e: any) => e.student_id));
+      setStudents(studentsRes.data.filter((s: Student) => studentIdsForCourse.has(s.id)));
+
+      // Cargar datos de asistencia inicial
+      await fetchAttendanceData(courseId);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError('No se pudo cargar la información.');
+    } finally {
+      setLoading(false);
+    }
+  }, [courseCode, fetchAttendanceData]);
+
+  // Efecto para carga inicial
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Configurar polling para actualizaciones automáticas
+  const pollingCallback = useCallback(async () => {
+    if (course?.id) {
+      await fetchAttendanceData(course.id);
+    }
+  }, [course?.id, fetchAttendanceData]);
+
+  usePolling(
+    pollingCallback,
+    10000, // 10 segundos
+    !!course?.id // Solo habilitar si hay un curso cargado
+  );
+
+  const handleTakeAttendance = async () => {
+    const activeSchedule = course?.schedules?.find(isScheduleActive);
+    if (!activeSchedule) {
+      alert("No hay una clase en sesión en este momento.");
+      return;
+    }
+    
+    setIsTakingAttendance(true);
+    try {
+      const response = await api.post(`/schedules/${activeSchedule.id}/start-attendance`);
+      alert(response.data.message);
+      
+      // Actualizar inmediatamente después de tomar asistencia
+      if (course?.id) {
+        await fetchAttendanceData(course.id);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Ocurrió un error.";
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsTakingAttendance(false);
+    }
   };
 
+  const activeSchedule = course?.schedules?.find(isScheduleActive);
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Header title={`Asistencia - ${courseTitle}`} showBackButton={true} onBack={() => navigate('/dashboard')} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100 pb-12">
+      <AttendanceHeader courseTitle={course?.title || 'Cargando...'} />
+      {/* Agrega padding top para version mobile y web */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-28 lg:pt-24">
+        {/* Indicador de actualización automática */}
+        <div className="text-sm text-gray-500 mb-2 text-center">
+          <div className="inline-flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span>Actualización automática activa</span>
+            <span className="text-gray-400">•</span>
+            <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
+          </div>
+        </div>
+
+        {user && course && (
+          <AttendanceControls
+            course={course}
+            students={students}
+            attendanceDates={attendanceDates}
+            attendance={attendance}
+            user={user}
+            loading={loading}
+            activeSchedule={activeSchedule}
+            isTakingAttendance={isTakingAttendance}
+            onTakeAttendance={handleTakeAttendance}
+          />
+        )}
+        
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {loading && <p className="p-8 text-center text-gray-600">Cargando estudiantes...</p>}
-          {error && <p className="p-8 text-center text-red-600">{error}</p>}
-          {!loading && !error && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left border-collapse">
-                <thead className="border-b border-gray-200">
-                  <tr>
-                    {/* --- Cabeceras Fijas (AQUÍ ESTÁ EL CAMBIO) --- */}
-                    <th className="sticky left-0 z-10 px-4 py-3 font-semibold text-gray-700 bg-gray-50 w-32 border-r border-gray-200">
-                      CUI
-                    </th>
-                    <th className="sticky left-0 z-10 px-4 py-3 font-semibold text-gray-700 bg-gray-50 w-72">
-                      Apellidos y Nombres
-                    </th>
-
-                    {/* --- Cabeceras de Fecha con Scroll --- */}
-                    {attendanceDates.map((date, index) => (
-                      <th key={`${date}-${index}`} className="px-2 py-2 font-semibold text-gray-700 text-center w-16">
-                        {formatDateHeader(date)}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {students.map((student) => (
-                    <tr key={student.id} className="hover:bg-gray-50/70 transition-colors duration-150">
-                      {/* --- Celdas Fijas (AQUÍ ESTÁ EL CAMBIO) --- */}
-                      <td className="sticky left-0 px-4 py-3 whitespace-nowrap text-sm text-gray-800 bg-white hover:bg-gray-50/70 w-32 border-r border-gray-200">
-                        {student.cui}
-                      </td>
-                      <td className="sticky left-0 px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 bg-white hover:bg-gray-50/70 w-72">
-                        {`${student.last_name}, ${student.first_name}`}
-                      </td>
-
-                      {/* --- Celdas de Asistencia con Scroll --- */}
-                      {attendanceDates.map((date, index) => (
-                        <td key={`${date}-${index}`} className="px-2 py-3 whitespace-nowrap text-center">
-                          {getStatusSymbol(student.id, date)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <AttendanceTable
+            students={students}
+            attendanceDates={attendanceDates}
+            attendance={attendance}
+            loading={loading}
+            error={error}
+          />
         </div>
       </main>
     </div>

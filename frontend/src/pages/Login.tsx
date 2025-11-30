@@ -1,19 +1,28 @@
+// src/pages/Login.tsx
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
 import unsaBgURL from '../assets/unsa_bg2.avif';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(''); // Limpiar errores previos
-    const success = login(email, password);
-    if (!success) {
-      setError('Correo electrónico o contraseña incorrectos.');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login({ email, pass: password });
+      // La redirección ahora es manejada por AuthContext
+    } catch (err: any) {
+      setError(err.message || 'Correo electrónico o contraseña incorrectos.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -95,15 +104,23 @@ const Login = () => {
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                disabled={isLoading}
+                className="flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Iniciar Sesión
+                {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
               </button>
             </div>
           </form>
+           {/* Enlace a la página de registro */}
+           <p className="text-center text-sm text-gray-600">
+            ¿No tienes una cuenta?{' '}
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Regístrate
+            </Link>
+          </p>
         </div>
       </div>
-      
+
       {/* Pie de página con el texto de la UNSA */}
       <footer className="absolute bottom-4 right-6 text-xs text-gray-100/80">
         <p>Plataforma desarrollada para la UNSA</p>
