@@ -82,7 +82,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Header title="Mis Cursos" />
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
         {loading && (
           <p className="text-center text-gray-500">Cargando cursos...</p>
         )}

@@ -139,8 +139,8 @@ const Attendance = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-12">
       <AttendanceHeader courseTitle={course?.title || 'Cargando...'} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Agrega padding top para version mobile y web */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-28 lg:pt-24">
         {/* Indicador de actualización automática */}
         <div className="text-sm text-gray-500 mb-2 text-center">
           <div className="inline-flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">

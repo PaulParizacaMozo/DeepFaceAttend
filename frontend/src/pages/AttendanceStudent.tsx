@@ -124,7 +124,7 @@ const AttendanceStudent = () => {
         onBack={() => navigate('/dashboard')}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {loading && <p className="p-8 text-center text-gray-600">Cargando mi registro...</p>}
           {error && <p className="p-8 text-center text-red-600">{error}</p>}

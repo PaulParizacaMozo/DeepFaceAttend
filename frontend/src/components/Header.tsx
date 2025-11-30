@@ -23,7 +23,7 @@ const Header = ({ title, showBackButton = false, onBack }: HeaderProps) => {
     user?.role === "student" && location.pathname === "/dashboard";
 
   return (
-    <header className="bg-white shadow-sm p-4 mb-8 flex justify-between items-center">
+    <header className="bg-white shadow-sm p-4 mb-8 flex justify-between items-center fixed top-0 left-0 right-0 z-50">
       <div className="flex items-center gap-4">
         {showBackButton && (
           <button
