@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from ..services.embedding_service import generate_student_embedding, assign_student_to_course
+from ..services.embedding_service import generate_student_embedding, assign_student_to_course, get_student_embedding_from_csv
 import cv2
 import numpy as np
 from .. import config
@@ -104,4 +104,26 @@ def extract_embedding_endpoint():
     return jsonify({
         "status": "success",
         "embedding": embedding_list
+    }), 200
+
+# ==========================================================
+# Endpoint 4: Obtener embedding guardado de un estudiante
+# ==========================================================
+@processing_bp.route('/student-embedding/<student_id>', methods=['GET'])
+def get_student_embedding_endpoint(student_id):
+    """
+    Devuelve el embedding guardado en students.csv para el student_id dado.
+    Si no existe, responde 404.
+    """
+    embedding = get_student_embedding_from_csv(student_id)
+    if embedding is None:
+        return jsonify({
+            "status": "error",
+            "message": f"Embedding not found for student_id '{student_id}'."
+        }), 404
+
+    return jsonify({
+        "status": "success",
+        "student_id": student_id,
+        "embedding": embedding.tolist()  # JSON serializable
     }), 200

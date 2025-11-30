@@ -97,3 +97,50 @@ def assign_student_to_course(student_id, course_id):
     df_course.to_csv(course_path, index=False)
     print(f"Student '{student_id}' assigned to course '{course_id}'.")
     return True
+
+# ==========================================================
+# Servicio 3: Obtener embedding del estudiante desde students.csv
+# ==========================================================
+def get_student_embedding_from_csv(student_id):
+    """
+    Devuelve el embedding del estudiante como np.array(float32)
+    buscándolo en students.csv. Si no existe o hay error → None.
+    """
+    output_dir = config.CSV_OUTPUT_DIR
+    global_path = os.path.join(output_dir, "students.csv")
+
+    if not os.path.exists(global_path):
+        print(f"[ERROR] Global students.csv not found at {global_path}")
+        return None
+
+    try:
+        df = pd.read_csv(global_path)
+    except Exception as e:
+        print(f"[ERROR] Failed to read {global_path}: {e}")
+        return None
+
+    # Validar columnas
+    if 'student_id' not in df.columns or 'embedding' not in df.columns:
+        print(f"[ERROR] CSV {global_path} must contain 'student_id' and 'embedding' columns.")
+        return None
+
+    sid_str = str(student_id)
+
+    # Comparar casteando a string para evitar problemas de tipo (int vs str)
+    row = df[df['student_id'].astype(str) == sid_str]
+    if row.empty:
+        print(f"[WARN] No embedding found for student_id={sid_str} in {global_path}")
+        return None
+
+    emb_str = row.iloc[0]['embedding']
+    if not isinstance(emb_str, str) or not emb_str.strip():
+        print(f"[WARN] Empty embedding string for student_id={sid_str}")
+        return None
+
+    try:
+        emb_array = np.fromstring(emb_str, sep=';').astype('float32')
+    except Exception as e:
+        print(f"[ERROR] Failed to parse embedding for student_id={sid_str}: {e}")
+        return None
+
+    return emb_array
