@@ -151,7 +151,7 @@ const EditAttendance = () => {
         onBack={() => navigate(-1)}
       />
 
-      <main className="max-w-[95%] mx-auto mt-6 px-4">
+      <main className="max-w-[95%] mx-auto mt-24 px-4">
         
         {/* Barra superior de acciones */}
         <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200 sticky top-20 z-30">

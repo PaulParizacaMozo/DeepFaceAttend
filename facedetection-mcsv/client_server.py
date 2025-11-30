@@ -92,7 +92,7 @@ def capture_job(scheduler_id, duration_min, interval_sec):
     global global_job_running
     print(f"[JOB] Iniciado: Horario={scheduler_id}, Duración={duration_min} min, Intervalo={interval_sec} sec.")
     try:
-        end_time = time.time() + duration_min * 60
+        end_time = time.time() + 10
         while time.time() < end_time:
             current_frame_copy = None
             with global_frame_lock:
