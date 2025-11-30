@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from app import db
 from app.models.unknown_face import UnknownFace
 from app.models.schedule import Schedule
 from app.schemas.unknown_face_schema import unknown_face_schema
 from datetime import datetime
 import requests
+import os
 import numpy as np
 import json
 
@@ -298,3 +299,28 @@ def finalize_unknown_face(unknown_id):
             "resolved": uf.resolved,
         }
     }), 200
+
+
+captures_bp = Blueprint('captures_bp', __name__, url_prefix='/captures')
+@captures_bp.route('/<path:filename>', methods=['GET'])
+def get_capture_image(filename):
+    """
+    Sirve imágenes desde la carpeta 'captures' ubicada en el proyecto hermano 'facedetection-mcsv'.
+    """
+    try:
+        # 1. current_app.root_path apunta a: .../attendance-mcsv/app
+        # 2. Subimos 2 niveles ('..', '..') para salir de 'app' y de 'attendance-mcsv'
+        # 3. Entramos a 'facedetection-mcsv' y luego a 'captures'
+        captures_dir = os.path.join(
+            current_app.root_path, 
+            '..', '..', 
+            'facedetection-mcsv', 
+            'captures'
+        )
+        captures_dir = os.path.abspath(captures_dir)
+        print(f"Serving from: {captures_dir}")
+
+        return send_from_directory(captures_dir, filename)
+    except Exception as e:
+        print(f"Error serving image: {e}")
+        return jsonify({"error": "Image not found"}), 404

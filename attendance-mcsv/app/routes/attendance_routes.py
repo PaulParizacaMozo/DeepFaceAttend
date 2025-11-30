@@ -61,6 +61,64 @@ def add_attendance_record():
     
     return attendance_schema.jsonify(new_record), 201
 
+@attendance_bp.route('/manual', methods=['POST'])
+def add_manual_attendance_record():
+    """
+    Registra asistencia manualmente recibiendo student_id, schedule_id, fecha (YYYY-MM-DD) y hora (HH:MM:SS).
+    """
+    data = request.get_json()
+    
+    required_fields = ['student_id', 'schedule_id', 'date', 'time']
+    if not data or not all(k in data for k in required_fields):
+        return jsonify({"error": f"Faltan campos requeridos: {required_fields}"}), 400
+
+    student_id = data.get('student_id')
+    schedule_id = data.get('schedule_id')
+    date_str = data.get('date') # Formato esperado: "2025-09-02"
+    time_str = data.get('time') # Formato esperado: "14:30:00"
+
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Estudiante (student_id) no encontrado"}), 404
+        
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({"error": "Horario (schedule_id) no encontrado"}), 404
+
+    course_id = schedule.course_id
+
+    try:
+        attendance_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        full_datetime_str = f"{date_str} {time_str}"
+        check_in_time_obj = datetime.strptime(full_datetime_str, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        return jsonify({"error": "Formato inválido. Use 'YYYY-MM-DD' para fecha y 'HH:MM:SS' para hora."}), 400
+
+    existing_attendance = Attendance.query.filter_by(
+        student_id=student_id,
+        course_id=course_id,
+        attendance_date=attendance_date_obj
+    ).first()
+
+    if existing_attendance:
+        return jsonify({
+            "message": "La asistencia para este estudiante en este curso ya existe en la fecha indicada.",
+            "attendance": attendance_schema.dump(existing_attendance)
+        }), 409  
+    new_record = Attendance(
+        student_id=student_id,
+        course_id=course_id,
+        attendance_date=attendance_date_obj,   
+        check_in_time=check_in_time_obj,       
+        status="presente"                     
+    )
+    
+    db.session.add(new_record)
+    db.session.commit()
+    
+    return attendance_schema.jsonify(new_record), 201
+
 
 @attendance_bp.route('/search', methods=['POST'])
 def search_attendance():

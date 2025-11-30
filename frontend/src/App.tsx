@@ -13,6 +13,7 @@ import AttendanceStudent from "./pages/AttendanceStudent.tsx";
 import EditAttendance from "./pages/EditAttendance";
 import UpdateBiometrics from "./pages/UploadPhotos";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AttendanceRecovery from "./pages/AttendanceRecovery";
 
 function App() {
   return (
@@ -36,6 +37,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <UpdateBiometrics />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendance-recovery"
+            element={
+              <ProtectedRoute>
+                <AttendanceRecovery />
               </ProtectedRoute>
             }
           />
