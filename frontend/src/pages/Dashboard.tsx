@@ -17,30 +17,21 @@ const Dashboard = () => {
 
   useEffect(() => {
     const checkBiometricStatus = async () => {
-      // Si no hay usuario o no es estudiante, saltamos la validación
       if (!user || user.role !== "student") {
         setCheckingBiometrics(false);
         return;
       }
-
       try {
-        // Llamada al endpoint solicitado
         const response = await api.get(`/students/check-embeddings/${user.id}`);
-
         const hasEmbeddings = response.data.has_embeddings;
-
         if (!hasEmbeddings) {
-          // Si es false, forzamos la redirección a la vista de subir fotos
           console.log("Biometría incompleta, redirigiendo...");
           navigate("/update-biometrics");
         } else {
-          // Si es true, permitimos cargar el dashboard
           setCheckingBiometrics(false);
         }
       } catch (err) {
         console.error("Error verificando biometría:", err);
-        // En caso de error (ej. servidor caído), decidimos si bloquear o dejar pasar.
-        // Por seguridad, dejamos pasar pero logueamos el error, o mostramos alerta.
         setCheckingBiometrics(false);
       }
     };

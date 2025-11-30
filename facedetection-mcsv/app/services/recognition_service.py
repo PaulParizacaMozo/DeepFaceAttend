@@ -72,7 +72,7 @@ def send_unknown_face_to_attendance(embedding, image_path, schedule_id):
             "schedule_id": schedule_id,  # ← sin int()
             "embedding": embedding_str,
             "image_path": image_path,
-            "detected_at": datetime.datetime.utcnow().isoformat()
+            "detected_at": datetime.datetime.now().isoformat()
         }
 
         print(f"[INFO] Enviando Unknown face a {ATTENDANCE_UNKNOWN_URL} ...")

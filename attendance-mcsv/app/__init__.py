@@ -29,7 +29,7 @@ def create_app(config_class=Config):
     from app.routes.enrollment_routes import enrollments_bp
     from app.routes.attendance_routes import attendance_bp
     from app.routes.auth_routes import auth_bp
-    from app.routes.unknown_face_routes import unknown_face_bp
+    from app.routes.unknown_face_routes import unknown_face_bp, captures_bp
 
     app.register_blueprint(students_bp)
     app.register_blueprint(courses_bp)
@@ -38,6 +38,7 @@ def create_app(config_class=Config):
     app.register_blueprint(attendance_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(unknown_face_bp)
+    app.register_blueprint(captures_bp)
 
     # Registrar comandos CLI personalizados
     register_commands(app)

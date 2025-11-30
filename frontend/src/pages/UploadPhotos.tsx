@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import unsaBgURL from "../assets/unsa_bg2.avif";
-import { useAuth } from "../hooks/useAuth"; // Necesitamos el ID del usuario
+import { useAuth } from "../hooks/useAuth";
 
 // Definimos los tipos de fotos requeridas
 type PhotoType = "front" | "right" | "left";

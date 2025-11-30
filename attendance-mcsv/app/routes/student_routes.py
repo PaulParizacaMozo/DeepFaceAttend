@@ -84,3 +84,22 @@ def upload_student_embeddings():
     except Exception as e:
         print(f"Server Error: {e}")
         return jsonify({"error": str(e)}), 500
+
+@students_bp.route('/get-id/<string:user_id>', methods=['GET'])
+def get_student_id(user_id):
+    """
+    Obtiene el student_id asociado a un user_id específico.
+    """
+    try:
+        student = Student.query.filter_by(user_id=user_id).first()
+
+        if not student:
+            return jsonify({"error": "Student profile not found for this user"}), 404
+        return jsonify({
+            "student_id": student.id
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching student ID: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
