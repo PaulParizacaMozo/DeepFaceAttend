@@ -1,9 +1,10 @@
+// frontend/src/pages/Register.tsx
 import { useState, type FormEvent, type ChangeEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import unsaBgURL from '../assets/unsa_bg2.avif';
 
-// --- MOCK DATA PARA LA DEMOSTRACIÓN ---
+// --- MOCK DATA PARA LA DEMOSTRACIÓN (esto se debera obtener del backend)---
 const MOCK_UNKNOWN_FACES = [
   {
     date: '2025-09-05',
