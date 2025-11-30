@@ -9,7 +9,7 @@ class Student(db.Model):
     cui = db.Column(db.String(20), unique=True, nullable=False)
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
-    filepath_embeddings = db.Column(db.String(255), nullable=True)
+    embeddings = db.Column(db.Boolean, default=False, nullable=False)
 
     # Clave foránea para la relación uno a uno con User
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, unique=True)

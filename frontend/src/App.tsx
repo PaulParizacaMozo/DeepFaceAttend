@@ -1,12 +1,18 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Attendance from './pages/Attendance';
-import AttendanceStudent from './pages/AttendanceStudent.tsx';
-import EditAttendance from './pages/EditAttendance'; 
-import ProtectedRoute from './components/ProtectedRoute';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Attendance from "./pages/Attendance";
+import AttendanceStudent from "./pages/AttendanceStudent.tsx";
+import EditAttendance from "./pages/EditAttendance";
+import UpdateBiometrics from "./pages/UploadPhotos";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -15,7 +21,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+
           <Route
             path="/dashboard"
             element={
@@ -25,22 +31,43 @@ function App() {
             }
           />
 
+          <Route
+            path="/update-biometrics"
+            element={
+              <ProtectedRoute>
+                <UpdateBiometrics />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Ruta del Profesor: Ver/Tomar Asistencia */}
-          <Route 
-            path="/attendance/:courseCode" 
-            element={<ProtectedRoute><Attendance /></ProtectedRoute>} 
+          <Route
+            path="/attendance/:courseCode"
+            element={
+              <ProtectedRoute>
+                <Attendance />
+              </ProtectedRoute>
+            }
           />
 
           {/* --- 2. AÑADIR RUTA: Editar Asistencia (Profesor) --- */}
-          <Route 
-            path="/attendance/:courseCode/edit" 
-            element={<ProtectedRoute><EditAttendance /></ProtectedRoute>} 
+          <Route
+            path="/attendance/:courseCode/edit"
+            element={
+              <ProtectedRoute>
+                <EditAttendance />
+              </ProtectedRoute>
+            }
           />
-          
+
           {/* Ruta del Estudiante */}
-          <Route 
-            path="/my-attendance/:courseCode" 
-            element={<ProtectedRoute><AttendanceStudent /></ProtectedRoute>} 
+          <Route
+            path="/my-attendance/:courseCode"
+            element={
+              <ProtectedRoute>
+                <AttendanceStudent />
+              </ProtectedRoute>
+            }
           />
 
           <Route

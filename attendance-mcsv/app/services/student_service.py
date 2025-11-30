@@ -1,5 +1,24 @@
 import os
 import requests
+from app import db  # Importación necesaria para actualizar la DB
+from app.models.student import Student # Importación del modelo
+
+# ==========================================================
+# Función: Actualiza el estado de embeddings a True
+# ==========================================================
+def update_student_embedding_status(student_id):
+    try:
+        student = Student.query.get(student_id)
+        if student:
+            student.embeddings = True
+            db.session.commit()
+            print(f"STATUS UPDATE: Student {student.cui} embeddings set to True.")
+            return True
+        return False
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating embedding status: {e}")
+        return False
 
 # ==========================================================
 # Función interna: envía N imágenes al endpoint de embeddings
@@ -12,7 +31,11 @@ def _send_to_embedding_service(files_payload, student_id):
         # Enviar todas las imágenes en un solo request
         response = requests.post(recognition_service_url, files=files_payload, data=data)
         if response.status_code == 200:
-            return True
+            res = update_student_embedding_status(student_id)
+            if res: return True
+            else:
+                print("Failed to update student embedding status in DB.")
+                return False
         else:
             print(f"Recognition service error: {response.status_code} - {response.text}")
             return False
