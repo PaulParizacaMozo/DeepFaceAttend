@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify, current_app
 from ..services.embedding_service import generate_student_embedding, assign_student_to_course
+import cv2
+import numpy as np
+from .. import config
 
 processing_bp = Blueprint('processing_bp', __name__)
 
@@ -60,3 +63,45 @@ def assign_to_course_endpoint():
             "status": "error",
             "message": f"Failed to assign student '{student_id}' to course '{course_id}'."
         }), 400
+    
+    
+# Falta probar este endpoint
+# ==========================================================
+# Endpoint 3: Extraer embedding (Helper para otros servicios)
+# ==========================================================
+@processing_bp.route('/extract-embedding', methods=['POST'])
+def extract_embedding_endpoint():
+    """
+    Recibe una imagen y devuelve su embedding (vector) en formato JSON.
+    No guarda nada en disco ni base de datos.
+    """
+    face_model = current_app.face_model
+
+    if 'image' not in request.files:
+        return jsonify({"error": "No image provided."}), 400
+
+    file = request.files['image']
+    np_img = np.frombuffer(file.read(), np.uint8)
+    frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+
+    if frame is None:
+        return jsonify({"error": "Could not decode image."}), 400
+
+    faces = face_model.get(frame)
+    
+    # Buscar la cara con mejor score y tamaño
+    if not faces:
+        return jsonify({"error": "No face detected."}), 400
+
+    best_face = max(faces, key=lambda face: face.det_score)
+    
+    if best_face.det_score < config.DETECTION_THRESHOLD:
+        return jsonify({"error": "Face detection score too low."}), 400
+
+    # Convertir ndarray a lista para JSON
+    embedding_list = best_face.embedding.tolist()
+
+    return jsonify({
+        "status": "success",
+        "embedding": embedding_list
+    }), 200
