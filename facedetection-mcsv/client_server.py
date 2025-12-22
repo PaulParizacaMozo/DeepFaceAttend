@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify
 # --- Configuración de Endpoints ---
 PROCESS_URL = "http://127.0.0.1:4000/process_frame" # Servidor de procesamiento (Puerto 4000)
 ATTENDANCE_URL = "http://127.0.0.1:5000/attendance/" # Servidor de toma de asistencia (Puerto 5000)
-CAMERA_INDEX = 0#"http://10.7.135.135:8080/video"#0 # "http://192.168.1.46:8080/video" # Indice de la camara a usar
+CAMERA_INDEX = 1#"http://10.7.135.135:8080/video"#0 # "http://192.168.1.46:8080/video" # Indice de la camara a usar
 
 # --- Recursos Globales Compartidos ---
 global_camera = None    # Objeto VideoCapture

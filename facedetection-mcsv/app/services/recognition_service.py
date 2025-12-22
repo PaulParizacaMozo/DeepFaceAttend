@@ -12,7 +12,7 @@ CAPTURES_DIR = os.path.join(base_dir, '..', '..', 'captures')
 os.makedirs(CAPTURES_DIR, exist_ok=True)
 print(f"[INFO] Directorio de capturas asegurado en: {CAPTURES_DIR}")
 
-CAMERA_CLIENT_URL = "http://localhost:6000/start_capture" 
+CAMERA_CLIENT_URL = "http://localhost:6000/start_capture"
 ATTENDANCE_UNKNOWN_URL = "http://127.0.0.1:5000/unknown-faces"
 
 def find_best_match(new_embedding, known_face_db, threshold):
@@ -175,3 +175,31 @@ def capture_and_recognize_faces(scheduler_id):
             print(f"[ERROR] Camera client error: {response.status_code} - {response.text}")
     except requests.exceptions.RequestException as e:
         print(f"[ERROR] Failed to contact camera client: {e}")
+
+def benchmark_recognition_engine(frame, face_model, known_matrix, known_labels):
+    """
+    Separa el tiempo de 'Ver' (Detection+Embedding) del tiempo de 'Pensar' (Matching).
+    """
+    t_start_pipeline = time.perf_counter()
+    faces = face_model.get(frame) 
+    t_end_pipeline = time.perf_counter()
+    pipeline_time = t_end_pipeline - t_start_pipeline
+
+    if not faces:
+        return [], pipeline_time, 0.0
+
+    t_start_matching = time.perf_counter()
+    recognized_names = []
+    for face in faces:
+        if face.det_score < config.DETECTION_THRESHOLD:
+            continue
+        identity, confidence = find_best_match_vectorized(
+            face.embedding, known_matrix, known_labels, config.SIMILARITY_THRESHOLD
+        )
+        recognized_names.append({
+            "identity": identity,
+            "confidence": float(confidence)
+        })
+    t_end_matching = time.perf_counter()
+    matching_time = t_end_matching - t_start_matching
+    return recognized_names, pipeline_time, matching_time

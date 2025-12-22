@@ -8,7 +8,7 @@
 **/env/
 **/.venv/
 **/.env/
-
+**/att_faces_png/**
 # Archivos de bloqueo de paquetes (si no se desean en el repo)
 package-lock.json
 yarn.lock

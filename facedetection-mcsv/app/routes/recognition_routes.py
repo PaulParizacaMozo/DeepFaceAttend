@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from ..services.recognition_service import recognize_faces_in_frame_2, capture_and_recognize_faces
+from ..services.recognition_service import recognize_faces_in_frame_2, capture_and_recognize_faces, benchmark_recognition_engine
 import cv2
 import sqlite3
 import numpy as np
@@ -78,3 +78,36 @@ def start_attendance_capture():
         "status": "started",
         "message": f"Attendance capture started for course {scheduler_id}"
     }), 200
+    
+@recognition_bp.route('/benchmark/process', methods=['POST'])
+def benchmark_process():
+    course_id = request.form.get('course_id')
+    if not course_id:
+         return jsonify({"error": "course_id is required"}), 400
+    if 'image' not in request.files:
+        return jsonify({"error": "Image file not found"}), 400
+        
+    file = request.files['image']
+    face_model = current_app.face_model
+    try:
+        course_db = database_service.load_known_faces_from_csv(course_id)
+        if not course_db:
+             known_matrix = np.empty((0, 512))
+             known_labels = []
+        else:
+            known_matrix, known_labels = database_service.prepare_vectorized_db(course_db)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    np_img = np.frombuffer(file.read(), np.uint8)
+    frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+    if frame is None:
+        return jsonify({"error": "Invalid image"}), 400
+    results, pipeline_time, matching_time = benchmark_recognition_engine(frame, face_model, known_matrix, known_labels)
+    total_time = pipeline_time + matching_time
+    return jsonify({
+        "total_inference_time": total_time,
+        "pipeline_time": pipeline_time,
+        "matching_time": matching_time,
+        "face_count": len(results),
+        "results": results
+    })
