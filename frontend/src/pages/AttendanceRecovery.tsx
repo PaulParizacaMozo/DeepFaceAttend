@@ -112,7 +112,7 @@ const AttendanceRecovery = () => {
   };
 
   // --- PASO 2: Selección de Caras (Matches) ---
-  const toggleMatchSelection = (matchId: number, scheduleUniqueKey: string) => {
+  const toggleMatchSelection = (matchId: number) => {
     if (!apiData) return;
 
     const newSelection = new Set(selectedMatchIds);
@@ -510,7 +510,7 @@ const AttendanceRecovery = () => {
                                 <div
                                   key={match.id}
                                   onClick={() =>
-                                    toggleMatchSelection(match.id, group.key)
+                                    toggleMatchSelection(match.id)
                                   }
                                   className={`relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 group ${
                                     isSelected
