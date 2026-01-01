@@ -11,21 +11,10 @@ COPY requirements.txt ./
 # --no-cache-dir reduce el tamaño de la imagen
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos todo el código de la aplicación
-# (app/, config.py, run.py, etc.)
 COPY . .
 
 # Exponemos el puerto 5000 que declaraste
 EXPOSE 5000
 
-# --- Comando para ejecutar la aplicación ---
-#
-# Para producción, no debes usar "python run.py".
-# Debes usar un servidor WSGI como Gunicorn.
-#
-# 1. Asegúrate de que 'gunicorn' esté en tu requirements.txt
-# 2. El comando asume que tu archivo 'run.py' define una variable 'app'
-#    (ej. app = create_app() o app = Flask(__name__))
-#    Si tu variable se llama diferente o está en otro archivo, ajusta "run:app"
-#
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "run:app"]
+# Comando para ejecutar con Gunicorn en producción
+CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:5000", "run:app"]

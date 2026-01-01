@@ -1,43 +1,34 @@
-services: # Definición de los servicios (contenedores)
-  
-  # Servicio del Frontend
+services:   
   frontend:
     build:
-      # Contexto es la carpeta 'frontend'
       context: ./frontend
-      # El Dockerfile a usar
       dockerfile: Dockerfile
     ports:
-      # Mapea el puerto 8080 de tu máquina al puerto 80 del contenedor
       - "8080:80"
-    # El frontend depende del backend para iniciarse
     depends_on:
-      - backend
+      - attendance-mcsv
 
-  # Servicio del Backend
-  backend:
+  attendance-mcsv:
     build:
-      # Contexto es la carpeta 'backend'
       context: ./attendance-mcsv
-      # El Dockerfile a usar
       dockerfile: Dockerfile
     ports:
-      # Mapea el puerto 5000 de tu máquina al puerto 5000 del contenedor
       - "5000:5000"
     volumes:
-      # Crea y usa un volumen llamado 'db_data' para persistir la base de datos
-      # Esto es CRUCIAL para que no pierdas tu base de datos SQLite al reiniciar
-      # ADVERTENCIA: Ver la nota de configuración de abajo
       - db_data:/data
     environment:
-      # Pasa la URL de la base de datos como variable de entorno
-      # El contenedor escribirá la DB en el volumen '/data/database.db'
       - DATABASE_URL=sqlite:////data/database.db
       - FLASK_ENV=production
-      # Deberías pasar tu Clave Secreta aquí, no hardcodearla
       - SECRET_KEY=tu_clave_secreta_aqui 
 
-# Definición de los volúmenes
+  facedetection-mcsv:
+    build:
+      context: ./facedetection-mcsv
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - FLASK_ENV=production
+
 volumes:
-  # Define el volumen 'db_data' para persistir la base de datos
   db_data:

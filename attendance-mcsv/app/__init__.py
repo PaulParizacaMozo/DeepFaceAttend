@@ -1,9 +1,10 @@
-# app/__init__.py
+# attendance-mcsv/app/__init__.py
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from config import Config
+import os
 
 # Inicializar extensiones globalmente pero sin una aplicación específica
 db = SQLAlchemy()
@@ -21,6 +22,15 @@ def create_app(config_class=Config):
          resources={r"/*": {"origins": "*"}}, 
          supports_credentials=True,
          allow_headers=["Authorization", "Content-Type"])
+    
+    # Iniciar el scheduler en el contexto de la app
+    if not app.debug or os.getenv("WERKZEUG_RUN_MAIN") == "true":
+        # Solo en producción o sin debugger 
+        from app.scheduler import run_scheduler
+        import threading
+        scheduler_thread = threading.Thread(target=run_scheduler, args=(app,), daemon=True)
+        scheduler_thread.start()
+        app.logger.info("Background scheduler started.")
 
     # Importar y registrar los Blueprints (grupos de rutas)
     from app.routes.student_routes import students_bp

@@ -1,10 +1,11 @@
+# facedetection-mcsv/app/__init__.py
 from flask import Flask
 import config
 from .models import custom_face_model as face_analyzer
 # from .models import face_model as face_analyzer
 from .services import database_service
 
-def create_app_2():
+def create_app():
     app = Flask(__name__)
     app.config.from_object(config)
 

@@ -35,12 +35,27 @@ Este proyecto es el resultado de una investigación en la Universidad Nacional d
 
 - Para ejecutar el frontend y attendance-mcsv:
 ```bash
-docker-compose up --build -d
+docker-compose up --build # Para construir y ejecutar 
+docker-compose down       # Para detener los contenedores
+docker-compose down -v    # Para detener y eliminar volúmenes
+docker-compose logs -f    # Para ver los logs en tiempo real
+docker-compose logs -f facedetection-mcsv # Para ver los logs del servicio facedetection-mcsv
+docker-compose logs -f attendance-mcsv    # Para ver los logs del servicio attendance-mcsv
 ```
-- Acceder a la interfaz web en: `http://localhost:8080`
-- Para detener los contenedores:
+
+### Ejecución attendance-mcsv por separado
+
 ```bash
-docker-compose down
+docker build -t attendance-mcsv .
+docker run --name attendance-app -p 5000:5000 attendance-mcsv
+docker logs -f attendance-app
+docker rm -f attendance-app
+```
+
+### Limpieza total de contenedores e imágenes
+
+```bash
+docker system prune -a --volumes
 ```
 
 ## Descripción del Proyecto
