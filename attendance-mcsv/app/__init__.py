@@ -6,7 +6,6 @@ from flask_cors import CORS
 from config import Config
 import os
 
-# Inicializar extensiones globalmente pero sin una aplicación específica
 db = SQLAlchemy()
 ma = Marshmallow()
 
@@ -15,9 +14,9 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Inicializar las extensiones con la aplicación
     db.init_app(app)
     ma.init_app(app)
+
     CORS(app, 
          resources={r"/*": {"origins": "*"}}, 
          supports_credentials=True,
@@ -59,14 +58,12 @@ def register_commands(app):
     """Registra comandos CLI como 'flask init-db'."""
     @app.cli.command("init-db")
     def init_db():
-        # ... (código sin cambios)
         from app.models import user, student, course, schedule, enrollment, attendance, teacher
         db.create_all()
         print("Database initialized and all tables created successfully.")
 
     @app.cli.command("drop-db")
     def drop_db():
-        # ... (código sin cambios)
         db.drop_all()
         print("All tables dropped successfully.")
         
@@ -104,7 +101,11 @@ def register_commands(app):
             { 'cui': '20210002', 'first_name': 'Nelzon Jorge', 'last_name': 'Apaza Apaza', 'email': 'napaza@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'nelzon_pics') },
             { 'cui': '20210003', 'first_name': 'Kevin Joaquin', 'last_name': 'Chambi Tapia', 'email': 'kchambi@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'kevin_pics') },
             { 'cui': '20210004', 'first_name': 'Braulio Nayap', 'last_name': 'Maldonado Casilla', 'email': 'bmaldonado@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'braulio_pics') },
-            { 'cui': '20210005', 'first_name': 'Paul Antony', 'last_name': 'Parizaca Mozo', 'email': 'pparizaca@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'paul_pics') }
+            { 'cui': '20210005', 'first_name': 'Paul Antony', 'last_name': 'Parizaca Mozo', 'email': 'pparizaca@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'paul_pics') },
+            { 'cui': '20210006', 'first_name': 'Sergio Daniel', 'last_name': 'Mogollon Caceres', 'email': 'smogollon@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'sergio_pics') },
+            { 'cui': '20210007', 'first_name': 'Leon Felipe', 'last_name': 'Davis Coropuna', 'email': 'ldavis@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'leon_pics') },
+            { 'cui': '20210008', 'first_name': 'Avelino', 'last_name': 'Lupo Condori', 'email': 'alupo@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'avelino_pics') },
+            { 'cui': '20210009', 'first_name': 'Victor Alejandro', 'last_name': 'Quicaño Miranda', 'email': 'vquicano@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'alejandro_pics') }
         ]
         
         students_to_add = []
@@ -162,7 +163,8 @@ def register_commands(app):
                 course_ti3,
                 Course(course_name='Internet de las Cosas', course_code='1705268', semester='10'),
                 Course(course_name='Robotica (E)', course_code='1705269', semester='10'),
-                Course(course_name='Topicos en Ciberserguridad (E)', course_code='1705270', semester='10')
+                Course(course_name='Topicos en Ciberserguridad (E)', course_code='1705270', semester='10'),
+                Course(course_name='Trabajo de Investigacion', course_code='1705271', semester='10')
             ]
             db.session.add_all(courses_to_add)
             db.session.commit()
