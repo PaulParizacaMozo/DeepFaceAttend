@@ -299,7 +299,7 @@ def register_commands(app):
         import os
         import random
 
-        TOTAL_FOLDERS_TO_PROCESS = 50 
+        TOTAL_FOLDERS_TO_PROCESS = 200 
         
         TARGET_IMAGES = ['front.jpg', 'left.jpg', 'right.jpg']
         
@@ -382,17 +382,17 @@ def register_commands(app):
             print(f"Total students created with embeddings: {len(students_created)}")
 
             # 4. Crear Cursos (Para los porcentajes)
-            print("Creating courses...")
-            # Curso A: 100% estudiantes
-            course_100 = Course(course_name='Curso General (100%)', course_code='C100', semester='10', teacher_id=teacher1.id)
-            # Curso B: 75% estudiantes
-            course_75 = Course(course_name='Curso Electivo I (75%)', course_code='C075', semester='10', teacher_id=teacher1.id)
-            # Curso C: 50% estudiantes
-            course_50 = Course(course_name='Curso Electivo II (50%)', course_code='C050', semester='10', teacher_id=teacher2.id)
-            # Curso D: 25% estudiantes
-            course_25 = Course(course_name='Seminario Tesis (25%)', course_code='C025', semester='10', teacher_id=teacher2.id)
+            print("Creating courses (Sizes: 12, 25, 37, 50, 100, 150, 200)...")
+            
+            c_12  = Course(course_name='Experimento N=12',  course_code='EXP012', semester='10', teacher_id=teacher1.id)
+            c_25  = Course(course_name='Experimento N=25',  course_code='EXP025', semester='10', teacher_id=teacher1.id)
+            c_37  = Course(course_name='Experimento N=37',  course_code='EXP037', semester='10', teacher_id=teacher1.id)
+            c_50  = Course(course_name='Experimento N=50',  course_code='EXP050', semester='10', teacher_id=teacher2.id)
+            c_100 = Course(course_name='Experimento N=100', course_code='EXP100', semester='10', teacher_id=teacher2.id)
+            c_150 = Course(course_name='Experimento N=150', course_code='EXP150', semester='10', teacher_id=teacher2.id)
+            c_200 = Course(course_name='Experimento N=200', course_code='EXP200', semester='10', teacher_id=teacher1.id)
 
-            all_courses = [course_100, course_75, course_50, course_25]
+            all_courses = [c_12, c_25, c_37, c_50, c_100, c_150, c_200]
             db.session.add_all(all_courses)
             db.session.commit()
 
@@ -403,15 +403,15 @@ def register_commands(app):
             db.session.commit()
 
             # 5. Matrícula Porcentual
-            total_qty = len(students_created)
-            
             groups = [
-                (course_100, students_created),                                      # 100%
-                (course_75,  students_created[:int(total_qty * 0.75)]),              # 75%
-                (course_50,  students_created[:int(total_qty * 0.50)]),              # 50%
-                (course_25,  students_created[:int(total_qty * 0.25)])               # 25%
+                (c_12,  students_created[:12]),
+                (c_25,  students_created[:25]),
+                (c_37,  students_created[:37]),
+                (c_50,  students_created[:50]),
+                (c_100, students_created[:100]),
+                (c_150, students_created[:150]),
+                (c_200, students_created[:200])
             ]
-
             print("Enrolling students...")
             for course_obj, student_group in groups:
                 count = 0
@@ -477,9 +477,9 @@ def register_commands(app):
         import time
         
         API_URL = "http://localhost:4000/benchmark/process" 
-        COURSE_ID_PARA_TEST = "56a2bd8d-a990-4c8b-a2b1-eac2911cf271" 
+        COURSE_ID_PARA_TEST = "3f33a617-1f76-408c-a9fc-7436a39991a9" 
         
-        scenarios = [1, 1, 5, 10, 20, 30, 40, 50]
+        scenarios = [1, 1, 5, 10, 20, 30, 40, 50, 100, 150, 200]
         
         print("\n" + "="*105)
         print(f"{'N':<5} | {'TOTAL (s)':<12} | {'PIPELINE (s)':<15} | {'MATCHING (s)':<15} | {'FPS':<8} | {'FACES'}")
@@ -490,7 +490,8 @@ def register_commands(app):
         is_warmup = True 
 
         for n in scenarios:
-            filename = f"test_scene_{n}_students.jpg"
+            filename = os.path.join(project_root, f'../../datasets/synthetic_classrooms/classroom_{n:03d}_faces.jpg')
+            # filename = f"test_scene_{n}_students.jpg"
             if not os.path.exists(filename):
                 print(f"{n:<5} | Archivo no encontrado: {filename}")
                 continue
@@ -528,42 +529,68 @@ def register_commands(app):
     def bench_exp_c():
         """
         Experimento C: Robustez y Falsos Positivos vs Tamaño de Población (N).
-        Prueba una imagen con 50 rostros contra cursos con 12, 25, 37 y 50 alumnos.
+        Prueba una imagen masiva (200 rostros) contra cursos de distintos tamaños.
         """
         import requests
         import os
         from collections import Counter
+        from app.models.course import Course
 
         API_URL = "http://localhost:4000/benchmark/process"
         
-        COURSES = [
-            {"label": "N=12 (Baja)",   "id": "b0d29f9b-3311-48a0-a838-3ab333a07e65", "expected_hits": 12},
-            {"label": "N=25 (Media)",  "id": "7d9eeb2a-d229-4f4e-afbc-63d7160a1fac", "expected_hits": 25},
-            {"label": "N=37 (Alta)",   "id": "7635b82d-560f-4f0c-874b-f24055b6648a", "expected_hits": 37},
-            {"label": "N=50 (Full)",   "id": "56a2bd8d-a990-4c8b-a2b1-eac2911cf271", "expected_hits": 50},
+        # 1. Configuración de la imagen de prueba (200 rostros)
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        TEST_IMAGE_PATH = os.path.join(project_root, '../../datasets/synthetic_classrooms/classroom_200_faces.jpg')
+        if not os.path.exists(TEST_IMAGE_PATH):
+            print(f"[ERROR] No se encuentra la imagen: {TEST_IMAGE_PATH}")
+            return
+        
+        scenarios_config = [
+            ("EXP012", 12), 
+            ("EXP025", 25), 
+            ("EXP037", 37), 
+            ("EXP050", 50), 
+            ("EXP100", 100), 
+            ("EXP150", 150), 
+            ("EXP200", 200)
         ]
         
-        TEST_IMAGE = "test_scene_50_students.jpg"
+        COURSES = []
+        print("Cargando cursos de la base de datos...")
+        for code, expected in scenarios_config:
+            course = Course.query.filter_by(course_code=code).first()
+            if course:
+                COURSES.append({
+                    "label": f"N={expected}", 
+                    "id": str(course.id), 
+                    "expected_hits": expected
+                })
+            else:
+                print(f" [WARN] No se encontró el curso con código {code}. ¿Ejecutaste test-db?")
 
-        if not os.path.exists(TEST_IMAGE):
-            print(f"[ERROR] No se encuentra la imagen {TEST_IMAGE}. Ejecuta primero el generador de collage.")
+        if not COURSES:
+            print("[ERROR] No hay cursos para probar.")
             return
-
-        print("\n" + "="*110)
-        print(f"{'ESCENARIO (BD)':<15} | {'ROSTROS':<8} | {'IDENTIFICADOS':<15} | {'DESCONOCIDOS':<12} | {'FALSOS POSITIVOS?':<18} | {'DUPLICADOS'}")
-        print("="*110)
-
-        files = {'image': (TEST_IMAGE, open(TEST_IMAGE, 'rb'), 'image/jpeg')}
         
+        # print(COURSES)
+        
+        print("\n" + "="*115)
+        print(f"IMAGEN DE PRUEBA: 200 Rostros (classroom_200_faces.jpg)")
+        print("-" * 115)
+        print(f"{'ESCENARIO (BD)':<15} | {'DETECTADOS':<10} | {'IDENTIFICADOS':<15} | {'DESCONOCIDOS':<12} | {'FALSOS POS.':<15} | {'DUPLICADOS'}")
+        print("="*115)
+
         for scenario in COURSES:
             c_label = scenario["label"]
             c_id = scenario["id"]
             expected = scenario["expected_hits"]
             
-            files_payload = {'image': (TEST_IMAGE, open(TEST_IMAGE, 'rb'), 'image/jpeg')}
+            # Reabrimos el archivo en cada iteración para evitar problemas de puntero
+            files_payload = {'image': (os.path.basename(TEST_IMAGE_PATH), open(TEST_IMAGE_PATH, 'rb'), 'image/jpeg')}
             data_payload = {'course_id': c_id}
 
             try:
+                # print(f"Procesando {c_label}...") # Descomentar si tarda mucho
                 resp = requests.post(API_URL, files=files_payload, data=data_payload)
                 
                 if resp.status_code != 200:
@@ -572,7 +599,7 @@ def register_commands(app):
 
                 result = resp.json()
                 faces = result.get("results", [])
-                total_detected = len(faces)
+                total_detected = len(faces) # Debería ser cercano a 200
                 
                 identified_names = []
                 unknown_count = 0
@@ -586,27 +613,29 @@ def register_commands(app):
 
                 count_identified = len(identified_names)
                 
+                # Falsos Positivos: Si identificamos más gente de la que está matriculada
                 fp_count = max(0, count_identified - expected)
                 
                 fp_text = f"{fp_count}"
                 if fp_count > 0:
                     fp_text += " (!)"
 
+                # Duplicados: Si el mismo alumno fue detectado 2 veces en la foto
                 name_counts = Counter(identified_names)
                 duplicates = [name for name, count in name_counts.items() if count > 1]
                 
-                dup_text = "Ninguno"
+                dup_text = "-"
                 if duplicates:
                     dup_text = f"{len(duplicates)} Casos"
 
-                print(f"{c_label:<15} | {total_detected:<8} | {count_identified:<15} | {unknown_count:<12} | {fp_text:<18} | {dup_text}")
+                print(f"{c_label:<15} | {total_detected:<10} | {count_identified:<15} | {unknown_count:<12} | {fp_text:<15} | {dup_text}")
 
             except Exception as e:
                 print(f"{c_label:<15} | EXCEPCIÓN: {e}")
-
-        print("="*110 + "\n")
-        print("NOTA INTERPRETATIVA:")
-        print(" - IDENTIFICADOS: Debería ser cercano al N del curso (si el modelo es perfecto).")
-        print(" - DESCONOCIDOS: El resto de personas en la foto (50 - N).")
-        print(" - FALSOS POSITIVOS: Si Identificados > N esperado, el sistema aceptó impostores.")
-        print(" - DUPLICADOS: Si dice 'Casos', el sistema asignó el mismo nombre a 2 personas distintas en la foto.")
+                
+        print("="*115 + "\n")
+        print("GUÍA DE LECTURA:")
+        print(" 1. DETECTADOS: Debería ser siempre ~200 (todos los rostros de la foto).")
+        print(" 2. IDENTIFICADOS: Debería coincidir con N (el tamaño del curso).")
+        print(" 3. DESCONOCIDOS: Debería ser (200 - N).")
+        print(" 4. FALSOS POS: Si es > 0, el sistema confundió a un extraño con un alumno.")
