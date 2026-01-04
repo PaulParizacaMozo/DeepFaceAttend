@@ -105,7 +105,8 @@ def register_commands(app):
             { 'cui': '20210006', 'first_name': 'Sergio Daniel', 'last_name': 'Mogollon Caceres', 'email': 'smogollon@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'sergio_pics') },
             { 'cui': '20210007', 'first_name': 'Leon Felipe', 'last_name': 'Davis Coropuna', 'email': 'ldavis@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'leon_pics') },
             { 'cui': '20210008', 'first_name': 'Avelino', 'last_name': 'Lupo Condori', 'email': 'alupo@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'avelino_pics') },
-            { 'cui': '20210009', 'first_name': 'Victor Alejandro', 'last_name': 'Quicaño Miranda', 'email': 'vquicano@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'alejandro_pics') }
+            { 'cui': '20210009', 'first_name': 'Victor Alejandro', 'last_name': 'Quicaño Miranda', 'email': 'vquicano@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'alejandro_pics') },
+            { 'cui': '20210010', 'first_name': 'Christian', 'last_name': 'Pardave Espinoza', 'email': 'cpardave@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'christian_pics') }
         ]
         
         students_to_add = []
