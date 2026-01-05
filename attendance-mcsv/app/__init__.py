@@ -106,7 +106,8 @@ def register_commands(app):
             { 'cui': '20210007', 'first_name': 'Leon Felipe', 'last_name': 'Davis Coropuna', 'email': 'ldavis@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'leon_pics') },
             { 'cui': '20210008', 'first_name': 'Avelino', 'last_name': 'Lupo Condori', 'email': 'alupo@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'avelino_pics') },
             { 'cui': '20210009', 'first_name': 'Victor Alejandro', 'last_name': 'Quicaño Miranda', 'email': 'vquicano@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'alejandro_pics') },
-            { 'cui': '20210010', 'first_name': 'Christian', 'last_name': 'Pardave Espinoza', 'email': 'cpardave@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'christian_pics') }
+            { 'cui': '20210010', 'first_name': 'Christian', 'last_name': 'Pardave Espinoza', 'email': 'cpardave@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'christian_pics') },
+            { 'cui': '20210011', 'first_name': 'Jharold', 'last_name': 'Mayorga Villena', 'email': 'jmayorga@unsa.edu.pe', 'image_folder': os.path.join(dataset_base_path, 'jharold_pics') }
         ]
         
         students_to_add = []
@@ -159,9 +160,11 @@ def register_commands(app):
             # 3. Crear Cursos y asignarlo al profesor
             course_cloud = Course(course_name='Cloud Computing', course_code='1705265', semester='10', teacher_id=teacher_alvaro.id)
             course_ti3 = Course(course_name='Trabajo Interdisciplinar 3', course_code='1705267', semester='10', teacher_id=teacher_yessenia.id)
+            course_parallel = Course(course_name='Computación Paralela', course_code='1705299', semester='10', teacher_id=teacher_alvaro.id)
             courses_to_add = [
                 course_cloud,
                 course_ti3,
+                course_parallel,
                 Course(course_name='Internet de las Cosas', course_code='1705268', semester='10'),
                 Course(course_name='Robotica (E)', course_code='1705269', semester='10'),
                 Course(course_name='Topicos en Ciberserguridad (E)', course_code='1705270', semester='10'),
@@ -181,6 +184,9 @@ def register_commands(app):
                 # TI3 (Lun, Vie)
                 Schedule(course_id=course_ti3.id, day_of_week=1, start_time=time(14, 0), end_time=time(15, 40), location='Aula 202'),
                 Schedule(course_id=course_ti3.id, day_of_week=5, start_time=time(10, 40), end_time=time(12, 20), location='Aula 202'),
+                
+                Schedule(course_id=course_parallel.id, day_of_week=4, start_time=time(8, 50), end_time=time(10, 30), location='Laboratorio 1'),
+                Schedule(course_id=course_parallel.id, day_of_week=5, start_time=time(14, 00), end_time=time(15, 40), location='Aula 301'),
             ]
             db.session.add_all(schedules_to_add)
             db.session.commit()
@@ -220,6 +226,29 @@ def register_commands(app):
                 print(f"{len(enrollments_ti3)} students enrolled in Trabajo Interdisciplinar 3 (local DB).")
             else:
                 print("No enrollments were added for TI3 — all embedding assignments failed.")
+                
+
+            # 5.C Matricular estudiantes en Computación Paralela (SOLO LISTA ESPECIFICA)
+            target_names = ["Nelzon", "Kevin", "Braulio", "Paul", "Sergio", "Leon", "Avelino"]
+            
+            enrollments_parallel = []
+            print("\nEnrolling selected students in Computación Paralela...")
+            
+            for s in students_to_add:
+                if any(target in s.first_name for target in target_names):
+                    success = assign_to_course(s.id, course_parallel.id)
+                    if success:
+                        enrollment = Enrollment(student_id=s.id, course_id=course_parallel.id)
+                        enrollments_parallel.append(enrollment)
+                        db.session.add(enrollment)
+                        print(f" -> Enrolled in Paralela: {s.first_name} {s.last_name}")
+                    else:
+                        print(f" -> Failed embedding assign for {s.first_name}")
+            if enrollments_parallel:
+                db.session.commit()
+                print(f"{len(enrollments_parallel)} students enrolled in Computación Paralela.")
+            else:
+                print("No students matched for Computación Paralela.")
 
             # 6.A Registrar Asistencia en Cloud Computing
             attendance_records = [
@@ -279,6 +308,132 @@ def register_commands(app):
         except Exception as e:
             db.session.rollback()
             print(f"Error inserting data: {e}")
+            
+    @app.cli.command("bench-real-parallel")
+    def bench_real_parallel():
+        """
+        Benchmark Caso Real: Computación Paralela.
+        CORREGIDO: Compara por UUID y muestra nombres de los Faltantes (FN).
+        """
+        import requests
+        import os
+        from app.models.course import Course
+        from app.models.enrollment import Enrollment
+        from app.models.student import Student
+
+        API_URL = "http://localhost:4000/benchmark/process"
+        
+        COURSE_CODE = "1705299" 
+        
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        IMAGES_DIR = os.path.join(project_root, '../../datasets/real_tests') 
+        TARGET_IMAGES = ["real_1.png", "real_2.png", "real_3.png"]
+
+        course = Course.query.filter_by(course_code=COURSE_CODE).first()
+        if not course:
+            print(f"[ERROR] No se encontró el curso {COURSE_CODE}.")
+            return
+
+        enrolled_students = (
+            db.session.query(Student)
+            .join(Enrollment)
+            .filter(Enrollment.course_id == course.id)
+            .all()
+        )
+        
+        expected_ids = set([str(s.id) for s in enrolled_students])
+        id_to_name = {str(s.id): f"{s.first_name} {s.last_name}" for s in enrolled_students}
+        
+        N = len(expected_ids)
+
+        print("\n" + "="*130)
+        print(f"CURSO: {course.course_name} (N={N})")
+        nombres_lista = [s.first_name.split()[0] for s in enrolled_students]
+        print(f"ESTUDIANTES ESPERADOS: {', '.join(nombres_lista)}")
+        print("-" * 130)
+        print(f"{'IMAGEN':<12} | {'DETECTADOS':<10} | {'ENCONTRADOS (TP)':<18} | {'UNKNOWN':<10} | {'FALTAN (FN)':<12} | {'INTRUSOS':<10} | {'DUPLICADOS':<12} | {'TOTAL FP':<10}")
+        print("="*130)
+
+        for img_name in TARGET_IMAGES:
+            img_path = os.path.join(IMAGES_DIR, img_name)
+            
+            if not os.path.exists(img_path):
+                print(f"{img_name:<12} | [ERROR] Archivo no encontrado")
+                continue
+
+            files = {'image': (img_name, open(img_path, 'rb'), 'image/jpeg')}
+            data = {'course_id': str(course.id)}
+
+            try:
+                resp = requests.post(API_URL, files=files, data=data)
+                if resp.status_code != 200:
+                    print(f"{img_name:<12} | Error API: {resp.status_code}")
+                    continue
+
+                result = resp.json()
+                faces = result.get("results", [])
+                
+                total_detected = len(faces)
+                
+                detected_ids = [] 
+                unknown_count = 0
+                
+                for face in faces:
+                    identity_id = face["identity"]
+                    if identity_id == "Unknown":
+                        unknown_count += 1
+                    else:
+                        detected_ids.append(identity_id)
+
+                unique_detected_set = set(detected_ids)
+                
+                tp_set = unique_detected_set.intersection(expected_ids)
+                tp_count = len(tp_set)
+                
+                fn_set = expected_ids - unique_detected_set
+                fn_count = len(fn_set)
+                
+                intruders_set = unique_detected_set - expected_ids
+                intruders_count = len(intruders_set)
+                
+                duplicates_count = len(detected_ids) - len(unique_detected_set)
+                
+                total_fp = intruders_count + duplicates_count
+                
+                # --- FORMATO DE SALIDA ---
+                unknown_text = f"{unknown_count}"
+                if (img_name == "real_1.png" and unknown_count == 1) or \
+                   (img_name == "real_2.png" and unknown_count == 2) or \
+                   (img_name == "real_3.png" and unknown_count == 3):
+                    unknown_text += " (OK)"
+
+                fn_text = f"{fn_count}"
+                intruder_text = "-"
+                if intruders_count > 0:
+                    first_intruder_id = list(intruders_set)[0]
+                    intruder_text = f"{intruders_count} ({first_intruder_id[:5]}..)"
+
+                dup_text = "-"
+                if duplicates_count > 0:
+                    dup_text = f"{duplicates_count} Casos"
+                
+                total_fp_text = f"{total_fp}"
+                if total_fp > 0: total_fp_text += " (!)"
+
+                print(f"{img_name:<12} | {total_detected:<10} | {tp_count:<18} | {unknown_text:<10} | {fn_text:<12} | {intruder_text:<10} | {dup_text:<12} | {total_fp_text:<10}")
+
+                if fn_count > 0:
+                    missing_names = [id_to_name[uid] for uid in fn_set if uid in id_to_name]
+                    missing_first_names = [name.split()[0] for name in missing_names]
+                    print(f"   > Faltaron por identificar: {', '.join(missing_first_names)}")
+
+            except Exception as e:
+                print(f"{img_name:<12} | EXCEPCIÓN: {e}")
+
+        print("="*130)
+        print("NOTAS:")
+        print(" - UNKNOWN: Debe incluir al profesor (no matriculado) + alumnos no reconocidos.")
+        print(" - FALTAN (FN): Lista de alumnos que estaban en la foto pero el sistema marcó como Unknown.")
             
     @app.cli.command("test-db")
     def test_db():
@@ -528,8 +683,8 @@ def register_commands(app):
     @app.cli.command("bench-exp-c")
     def bench_exp_c():
         """
-        Experimento C: Robustez y Falsos Positivos vs Tamaño de Población (N).
-        Prueba una imagen masiva (200 rostros) contra cursos de distintos tamaños.
+        Experimento C: Robustez, Consistencia y Desconocidos.
+        CORREGIDO: Los duplicados AHORA SE CUENTAN como Falsos Positivos.
         """
         import requests
         import os
@@ -541,6 +696,7 @@ def register_commands(app):
         # 1. Configuración de la imagen de prueba (200 rostros)
         project_root = os.path.dirname(os.path.abspath(__file__))
         TEST_IMAGE_PATH = os.path.join(project_root, '../../datasets/synthetic_classrooms/classroom_200_faces.jpg')
+        
         if not os.path.exists(TEST_IMAGE_PATH):
             print(f"[ERROR] No se encuentra la imagen: {TEST_IMAGE_PATH}")
             return
@@ -556,50 +712,36 @@ def register_commands(app):
         ]
         
         COURSES = []
-        print("Cargando cursos de la base de datos...")
+        print("Cargando cursos...")
         for code, expected in scenarios_config:
             course = Course.query.filter_by(course_code=code).first()
             if course:
-                COURSES.append({
-                    "label": f"N={expected}", 
-                    "id": str(course.id), 
-                    "expected_hits": expected
-                })
-            else:
-                print(f" [WARN] No se encontró el curso con código {code}. ¿Ejecutaste test-db?")
+                COURSES.append({"label": f"N={expected}", "id": str(course.id), "expected_hits": expected})
 
-        if not COURSES:
-            print("[ERROR] No hay cursos para probar.")
-            return
+        if not COURSES: return
         
-        # print(COURSES)
-        
-        print("\n" + "="*115)
-        print(f"IMAGEN DE PRUEBA: 200 Rostros (classroom_200_faces.jpg)")
-        print("-" * 115)
-        print(f"{'ESCENARIO (BD)':<15} | {'DETECTADOS':<10} | {'IDENTIFICADOS':<15} | {'DESCONOCIDOS':<12} | {'FALSOS POS.':<15} | {'DUPLICADOS'}")
-        print("="*115)
+        print("\n" + "="*145)
+        print(f"IMAGEN: 200 Rostros | CORRECCIÓN: Duplicados cuentan como Falsos Positivos")
+        print("-" * 145)
+        print(f"{'ESCENARIO':<10} | {'DETECTADOS':<10} | {'MATRICULADOS':<12} | {'ENCONTRADOS':<11} | {'UNKNOWN':<10} | {'FALTAN (FN)':<11} | {'FALSOS POS.':<12} | {'DUPLICADOS'}")
+        print("="*145)
 
         for scenario in COURSES:
             c_label = scenario["label"]
             c_id = scenario["id"]
             expected = scenario["expected_hits"]
             
-            # Reabrimos el archivo en cada iteración para evitar problemas de puntero
             files_payload = {'image': (os.path.basename(TEST_IMAGE_PATH), open(TEST_IMAGE_PATH, 'rb'), 'image/jpeg')}
             data_payload = {'course_id': c_id}
 
             try:
-                # print(f"Procesando {c_label}...") # Descomentar si tarda mucho
                 resp = requests.post(API_URL, files=files_payload, data=data_payload)
-                
-                if resp.status_code != 200:
-                    print(f"{c_label:<15} | Error API: {resp.status_code} - {resp.text}")
-                    continue
+                if resp.status_code != 200: continue
 
                 result = resp.json()
                 faces = result.get("results", [])
-                total_detected = len(faces) # Debería ser cercano a 200
+                
+                total_detected_in_image = len(faces) 
                 
                 identified_names = []
                 unknown_count = 0
@@ -611,31 +753,29 @@ def register_commands(app):
                     else:
                         identified_names.append(identity)
 
-                count_identified = len(identified_names)
+                total_predictions = len(identified_names)
+
+                unique_names = set(identified_names)
+                count_unique_found = len(unique_names)
+                duplicates_count = total_predictions - count_unique_found
+                intruders_count = max(0, count_unique_found - expected)
+                total_fp = duplicates_count + intruders_count
+
+                # 6. FALSOS NEGATIVOS (Faltan)
+                missing_count = max(0, expected - count_unique_found)
+                miss_text = f"{missing_count}"
                 
-                # Falsos Positivos: Si identificamos más gente de la que está matriculada
-                fp_count = max(0, count_identified - expected)
-                
-                fp_text = f"{fp_count}"
-                if fp_count > 0:
+                fp_text = f"{total_fp}"
+                if total_fp > 0:
                     fp_text += " (!)"
 
-                # Duplicados: Si el mismo alumno fue detectado 2 veces en la foto
-                name_counts = Counter(identified_names)
-                duplicates = [name for name, count in name_counts.items() if count > 1]
-                
                 dup_text = "-"
-                if duplicates:
-                    dup_text = f"{len(duplicates)} Casos"
+                if duplicates_count > 0:
+                    dup_text = f"{duplicates_count} Casos"
 
-                print(f"{c_label:<15} | {total_detected:<10} | {count_identified:<15} | {unknown_count:<12} | {fp_text:<15} | {dup_text}")
+                print(f"{c_label:<10} | {total_detected_in_image:<10} | {expected:<12} | {count_unique_found:<11} | {unknown_count:<10} | {miss_text:<11} | {fp_text:<12} | {dup_text}")
 
             except Exception as e:
-                print(f"{c_label:<15} | EXCEPCIÓN: {e}")
+                print(f"{c_label:<10} | EXCEPCIÓN: {e}")
                 
-        print("="*115 + "\n")
-        print("GUÍA DE LECTURA:")
-        print(" 1. DETECTADOS: Debería ser siempre ~200 (todos los rostros de la foto).")
-        print(" 2. IDENTIFICADOS: Debería coincidir con N (el tamaño del curso).")
-        print(" 3. DESCONOCIDOS: Debería ser (200 - N).")
-        print(" 4. FALSOS POS: Si es > 0, el sistema confundió a un extraño con un alumno.")
+        print("="*145 + "\n")
